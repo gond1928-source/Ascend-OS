@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SessionDraft } from "@/types/session";
+import { pollActivityWatch } from "@/lib/activitywatch/pollActivityWatch";
 
 export type AWStatus = "idle" | "polling" | "connected" | "error";
 
@@ -32,8 +33,7 @@ export function useActivityWatch(
   const poll = useCallback(async () => {
     setState((s) => ({ ...s, status: "polling" }));
     try {
-      const res = await fetch("/api/activitywatch");
-      const data = await res.json();
+      const data = await pollActivityWatch();
 
       if (data.connected) {
         setState({

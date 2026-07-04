@@ -17,17 +17,18 @@
  *   segment closes and the "Stop monitoring" button — has plenty of time
  *   for React to flush normally and goes through addSession() as usual.
  *
- * IMPORTANT: this reads/writes the exact same "ascend_sessions_v1" key and
- * Session shape as lib/session-context.tsx. The actual draft->Session
- * conversion is shared via lib/session-factory.ts so the two paths can
- * never drift apart on fields like runId — only the storage mechanism
- * (synchronous localStorage write vs React state) differs here.
+ * IMPORTANT: this reads/writes through the exact same sync helpers
+ * (lib/storage/session-store.ts's loadSessionsSync/saveSessionsSync) as
+ * every other localStorage access in the app, so the storage key lives in
+ * exactly one place. The actual draft->Session conversion is shared via
+ * lib/session-factory.ts so the two paths can never drift apart on fields
+ * like runId — only the storage mechanism (synchronous localStorage write
+ * vs React state) differs here.
  */
 
-import { Session, SessionDraft } from "@/types/session";
+import { SessionDraft } from "@/types/session";
 import { draftsToSessions } from "@/lib/session-factory";
-
-const STORAGE_KEY = "ascend_sessions_v1";
+import { loadSessionsSync, saveSessionsSync } from "@/lib/storage/session-store";
 
 /**
  * Append session drafts directly to localStorage, synchronously.
@@ -37,10 +38,9 @@ const STORAGE_KEY = "ascend_sessions_v1";
 export function persistDraftsDirectly(drafts: SessionDraft[]): void {
   if (typeof window === "undefined" || drafts.length === 0) return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const existing: Session[] = raw ? (JSON.parse(raw) as Session[]) : [];
+    const existing = loadSessionsSync();
     const newSessions = draftsToSessions(drafts, new Date());
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...newSessions, ...existing]));
+    saveSessionsSync([...newSessions, ...existing]);
   } catch {
     // Nothing more we can do from inside an unload handler.
   }

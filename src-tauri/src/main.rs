@@ -4,12 +4,14 @@
 use tauri::Manager;
 
 mod commands;
+mod tracker;
 
 fn main() {
     tauri::Builder::default()
         // Native commands are registered here as the app grows.
-        // e.g. .invoke_handler(tauri::generate_handler![commands::get_active_window])
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![
+            tracker::get_window_snapshot,
+        ])
         // Show the window only once the frontend is fully loaded — avoids
         // the white flash on startup.
         .setup(|app| {

@@ -94,6 +94,25 @@ export async function tauriListen<T>(
   }
 }
 
+/**
+ * fetch() that goes through @tauri-apps/plugin-http when running inside
+ * Tauri (required in v2 — the webview's global fetch can't reach
+ * arbitrary local ports like ActivityWatch's localhost:5600 without the
+ * http plugin + a scoped capability, see src-tauri/capabilities/default.json),
+ * and falls back to the ordinary browser fetch otherwise so `next dev` in a
+ * plain browser tab keeps working exactly like every other bridge helper here.
+ */
+export async function tauriFetch(
+  input: string,
+  init?: RequestInit,
+): Promise<Response> {
+  if (!isTauri()) {
+    return fetch(input, init);
+  }
+  const { fetch: pluginFetch } = await import("@tauri-apps/plugin-http");
+  return pluginFetch(input, init);
+}
+
 // ── Future native feature hooks (stub signatures for Phase 6+) ───────────────
 
 /**

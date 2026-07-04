@@ -2,7 +2,7 @@
  * NativeTracker — client-side polling service.
  *
  * Pipeline per poll:
- *   GET /api/native-tracker → WindowSnapshot
+ *   invoke("get_window_snapshot") → WindowSnapshot   (lib/tauri/tracker.ts)
  *     → classifySnapshot()  → ClassifiedSnapshot
  *     → buildSegments()     → ActivitySegment[]   (segmenter)
  *     → segmentsToSessions()→ SessionDraft[]       (session builder)
@@ -55,7 +55,6 @@
  */
 
 import {
-  WindowSnapshot,
   ActivitySegment,
   ClassifiedSnapshot,
   TrackerConfig,
@@ -65,6 +64,7 @@ import { classifySnapshot } from "./classifier";
 import { buildSegments } from "./segmenter";
 import { groupSegmentsByKindLanguage, evaluateGroupForCommit } from "./session-builder";
 import { SessionDraft, SessionSource } from "@/types/session";
+import { getWindowSnapshot } from "@/lib/tauri/tracker";
 
 export type TrackerStatus = "stopped" | "running" | "error";
 
@@ -291,14 +291,12 @@ export class NativeTracker {
 
   private async poll(): Promise<void> {
     try {
-      const res = await fetch("/api/native-tracker", {
-        signal: AbortSignal.timeout(3000),
-        cache: "no-store",
-      });
+      const snapshot = await getWindowSnapshot();
 
-      if (!res.ok) throw new Error(`HTTP ${res.status} from /api/native-tracker`);
+      if (!snapshot) {
+        throw new Error("get_window_snapshot unavailable (not running inside Tauri)");
+      }
 
-      const snapshot: WindowSnapshot = await res.json();
       const classified = classifySnapshot(snapshot);
 
       // Prune snapshots older than today

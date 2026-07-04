@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx database/seed.ts",
-
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
@@ -17,6 +16,7 @@
     "@prisma/client": "^5.16.1",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/cli": "^2.11.4",
+    "@tauri-apps/plugin-http": "^2.5.9",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.383.0",

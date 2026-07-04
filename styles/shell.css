@@ -35,8 +35,8 @@
   height: 100vh;
   padding: 12px 0;
   gap: 4px;
-  background: var(--surface-sidebar);
-  border-right: 1px solid var(--border-subtle);
+  background: #16181d; /* always dark — not theme-dependent, in dark or glass */
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   position: relative;
   z-index: 10;
 }
@@ -63,9 +63,9 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  flex: 1;
   width: 100%;
   padding: 0 8px;
+  flex-shrink: 0;
 }
 
 .icon-rail-btn {
@@ -76,31 +76,24 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
   transition: background var(--transition-fast), color var(--transition-fast);
   flex-shrink: 0;
 }
 
 .icon-rail-btn:hover {
-  background: var(--border-subtle);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .icon-rail-btn--active {
-  color: var(--accent-primary);
-  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  color: #16181d;
+  background: #ffffff;
 }
 
 .icon-rail-indicator {
-  position: absolute;
-  left: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2px;
-  height: 16px;
-  border-radius: 0 2px 2px 0;
-  background: var(--accent-primary);
+  display: none;
 }
 
 /* "Coming soon" dot on icon */
@@ -113,11 +106,95 @@
   border-radius: 50%;
   background: var(--accent-primary);
   opacity: 0.7;
-  border: 1px solid var(--surface-sidebar);
+  border: 1px solid #16181d;
 }
 
+/* Fills the leftover space between the nav icons and Settings — tabs sit
+   at the bottom of this flexible area, so the empty gap ends up *above*
+   them, matching the reference's layout rather than being wasted space. */
+.icon-rail-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  min-height: 96px;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-bottom: 12px;
+}
+
+/* Both tabs stay fully inside the rail's own width — no overflow tricks,
+   so they can never overlap the sidebar next to it. */
+.icon-rail-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  padding: 14px 0;
+  border-radius: 12px;
+}
+
+.icon-rail-tab--primary {
+  gap: 6px;
+  background: linear-gradient(180deg, #fbfbfd 0%, #e9ebf1 100%);
+}
+
+.icon-rail-tab--secondary {
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  opacity: 0.85;
+  box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.4);
+}
+
+.icon-rail-tab-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #2a2f3a;
+  white-space: nowrap;
+}
+
+.icon-rail-tab-text--muted {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.icon-rail-tab-version {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #9099a8;
+  white-space: nowrap;
+}
+
+/* Settings gets its own permanent dark button (not just an icon), like
+   the reference's bottom-most rounded square — always visible, regardless
+   of active state, since it's the one icon-rail item meant to read as a
+   persistent control rather than a nav destination. */
 .icon-rail-settings {
-  margin-top: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-top: 0;
+}
+
+.icon-rail-settings:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.icon-rail-settings.icon-rail-btn--active {
+  background: #ffffff;
+  color: #16181d;
 }
 
 /* ── Nav Panel (~220px) ──────────────────────────────────────────────────── */
@@ -527,12 +604,8 @@
   background: transparent;
 }
 
-[data-theme="glass"] .icon-rail {
-  background: rgba(255, 255, 255, 0.50);
-  backdrop-filter: var(--blur-lg);
-  -webkit-backdrop-filter: var(--blur-lg);
-  border-right-color: var(--border-default);
-}
+/* Icon rail intentionally has NO glass override — it stays the same
+   fixed dark color in every theme, per explicit instruction. */
 
 [data-theme="glass"] .nav-panel {
   background: rgba(255, 255, 255, 0.40);

@@ -11,6 +11,7 @@
  */
 
 import { SessionDraft } from "@/types/session";
+import { tauriFetch } from "@/lib/tauri/bridge";
 
 export const AW_BASE_URL = "http://localhost:5600";
 
@@ -66,7 +67,7 @@ export function classifyBucket(bucket: AWBucket): BucketKind {
  * Handles both object-map response (real AW) and hypothetical array response defensively.
  */
 export async function pingActivityWatch(): Promise<AWBucket[]> {
-  const res = await fetch(`${AW_BASE_URL}/api/0/buckets`, {
+  const res = await tauriFetch(`${AW_BASE_URL}/api/0/buckets`, {
     signal: AbortSignal.timeout(4000),
     headers: { Accept: "application/json" },
   });
@@ -112,7 +113,7 @@ export async function fetchBucketEvents(
   const url = `${AW_BASE_URL}/api/0/buckets/${encodeURIComponent(bucketId)}/events?${params}`;
   console.debug(`[AW] Fetching events: ${url}`);
 
-  const res = await fetch(url, {
+  const res = await tauriFetch(url, {
     signal: AbortSignal.timeout(6000),
     headers: { Accept: "application/json" },
   });
