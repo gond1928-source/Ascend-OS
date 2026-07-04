@@ -17,8 +17,7 @@ out/
 # typescript
 *.tsbuildinfo
 
-# tauri / rust build
-src-tauri/target/
+# src-tauri
 
 # OS files
 .DS_Store
@@ -32,4 +31,4 @@ Thumbs.db
 temp/
 .cache/
 
-ARCHITECTURE.md
+# ARCHITECTURE.md
