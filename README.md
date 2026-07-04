@@ -106,6 +106,8 @@ into one unified operating system experience.
 - customizable appearance system
 - top-right customization panel
 
+![Ascend OS Theme](screenshots/Theme-Switch.gif)
+
 ## UI / UX
 - desktop-inspired layout
 - dual-sidebar architecture
