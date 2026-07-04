@@ -1,0 +1,5 @@
+[
+  { "level": 1, "title": "Initiate", "xpRequired": 0 },
+  { "level": 2, "title": "Apprentice", "xpRequired": 500 },
+  { "level": 3, "title": "Practitioner", "xpRequired": 1000 }
+]

@@ -1,0 +1,36 @@
+[package]
+name = "ascend-os"
+version = "0.1.0"
+description = "Ascend OS — Desktop productivity tracker"
+authors = ["Ascend OS"]
+edition = "2021"
+
+[lib]
+name = "ascend_os_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "ascend-os"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+tauri-plugin-log = "2"
+
+# Future native features — uncomment as needed:
+# tauri-plugin-notification = "2"   # OS notifications
+# tauri-plugin-autostart   = "2"    # Launch on login
+# tauri-plugin-fs          = "2"    # Native filesystem
+# tauri-plugin-shell       = "2"    # Shell commands / daemon
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"

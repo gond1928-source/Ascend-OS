@@ -1,0 +1,203 @@
+/*
+ * glass.css — "Ascend Glass" theme
+ *
+ * Aesthetic: macOS-inspired soft glassmorphism. Translucent panels with
+ * backdrop-filter blur. The body holds the gradient; surfaces are rgba
+ * so the gradient bleeds through (genuine glass effect).
+ *
+ * Applied via [data-theme="glass"] on <html>.
+ */
+
+[data-theme="glass"] {
+  color-scheme: light;
+
+  /* ── Surfaces (translucent so body gradient shows through) ──────────── */
+  --surface-app:        transparent;              /* shell is transparent → body bg shows */
+  --surface-sidebar:    rgba(255, 255, 255, 0.55);
+  --surface-panel:      rgba(255, 255, 255, 0.45);
+  --surface-elevated:   rgba(255, 255, 255, 0.65);
+  --surface-overlay:    rgba(255, 255, 255, 0.80);
+
+  /* ── Text ───────────────────────────────────────────────────────────── */
+  --text-primary:       #1a1d27;
+  --text-secondary:     #4a5068;
+  --text-muted:         #8b91a8;
+
+  /* ── Accents ────────────────────────────────────────────────────────── */
+  --accent-primary:     #6655e0;
+  --accent-success:     #22b573;
+  --accent-warning:     #d99a28;
+  --accent-danger:      #e04466;
+  --accent-info:        #1fa8d9;
+
+  /* ── Borders ────────────────────────────────────────────────────────── */
+  --border-subtle:      rgba(255, 255, 255, 0.30);
+  --border-default:     rgba(180, 185, 210, 0.35);
+  --border-strong:      rgba(140, 148, 180, 0.50);
+  --border-accent:      rgba(102, 85, 224, 0.30);
+
+  /* ── Shadows ────────────────────────────────────────────────────────── */
+  --shadow-sm:          0 1px 3px rgba(60, 65, 100, 0.08),
+                        0 1px 2px rgba(60, 65, 100, 0.06);
+  --shadow-md:          0 4px 16px rgba(60, 65, 100, 0.10),
+                        0 1px 4px rgba(60, 65, 100, 0.08);
+  --shadow-lg:          0 12px 40px rgba(60, 65, 100, 0.15),
+                        0 4px 12px rgba(60, 65, 100, 0.10);
+  --shadow-glow:        0 0 0 1px rgba(102, 85, 224, 0.15),
+                        0 8px 30px -8px rgba(102, 85, 224, 0.20);
+
+  /* ── Blur ───────────────────────────────────────────────────────────── */
+  --blur-none:          blur(0px);
+  --blur-sm:            blur(8px);
+  --blur-md:            blur(20px);
+  --blur-lg:            blur(40px);
+  --blur-xl:            blur(80px);
+
+  /* ── Radius (rounder — softer, more macOS-like) ─────────────────────── */
+  --radius-sm:          8px;
+  --radius-md:          12px;
+  --radius-lg:          18px;
+  --radius-xl:          24px;
+  --radius-full:        9999px;
+
+  /* ── Transitions (slightly slower — glass feels more deliberate) ─────── */
+  --transition-fast:    120ms ease;
+  --transition-base:    220ms ease;
+  --transition-slow:    380ms ease;
+  --transition-spring:  360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/*
+ * Body gradient — the background that bleeds through all glass surfaces.
+ * Applied as background shorthand so it works on both <body> and
+ * the shell root (which is transparent in glass mode).
+ */
+[data-theme="glass"] body {
+  background: linear-gradient(135deg, #e8eaf0 0%, #d6d9e4 50%, #dde0ec 100%);
+  background-attachment: fixed;
+}
+
+/*
+ * Force light color-scheme so native UI controls render correctly.
+ */
+[data-theme="glass"] {
+  color-scheme: light;
+}
+
+/* Scrollbar overrides for glass (dark scrollbar looks wrong on light bg) */
+[data-theme="glass"] ::-webkit-scrollbar-thumb {
+  background: rgba(100, 110, 140, 0.25);
+}
+[data-theme="glass"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 110, 140, 0.45);
+}
+
+/* Selection */
+[data-theme="glass"] ::selection {
+  background: rgba(102, 85, 224, 0.20);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Legibility fixes — theme-file only, no component changes.
+ *
+ * Many components use Tailwind's fixed numeric ink-50…ink-600 shades
+ * (hardcoded to dark-theme values by design, since a handful of cards are
+ * meant to stay permanently dark regardless of theme). But content inside
+ * `.app-card` — the Card component, whose background *does* switch to a
+ * light glass surface here — was inheriting those same fixed near-white
+ * classes and going nearly invisible on the new light background.
+ *
+ * These rules only reach inside `.app-card`, so the intentionally-dark
+ * stat cards (XP, Streak, Coding, Focus ratio, etc., which don't use
+ * `.app-card`) are completely untouched and keep their original look.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+[data-theme="glass"] .app-card .text-ink-50,
+[data-theme="glass"] .app-card .text-ink-100,
+[data-theme="glass"] .app-card .text-ink-200 {
+  color: var(--text-primary);
+}
+
+[data-theme="glass"] .app-card .text-ink-300,
+[data-theme="glass"] .app-card .text-ink-400 {
+  color: var(--text-secondary);
+}
+
+[data-theme="glass"] .app-card .text-ink-500,
+[data-theme="glass"] .app-card .text-ink-600 {
+  color: var(--text-muted);
+}
+
+/* Progress-bar / track backgrounds that assumed a dark card behind them */
+[data-theme="glass"] .app-card .bg-base-700,
+[data-theme="glass"] .app-card .border-base-700 {
+  background-color: var(--border-subtle);
+  border-color: var(--border-subtle);
+}
+
+/* Page headers (e.g. "Good evening", "Analytics") sit directly on the
+   transparent glass background, outside any card — same fix, scoped to
+   <header> so it can never reach into the intentionally-dark stat cards. */
+[data-theme="glass"] header .text-ink-50,
+[data-theme="glass"] header .text-ink-100 {
+  color: var(--text-primary);
+}
+
+[data-theme="glass"] header .text-ink-300,
+[data-theme="glass"] header .text-ink-400,
+[data-theme="glass"] header .text-ink-500 {
+  color: var(--text-secondary);
+}
+
+/* Recharts renders axis labels/gridlines as inline SVG attributes —
+   CSS still wins over presentation attributes, so this repaints them
+   without touching any chart component. */
+[data-theme="glass"] .recharts-text,
+[data-theme="glass"] .recharts-cartesian-axis-tick text {
+  fill: var(--text-muted);
+}
+
+[data-theme="glass"] .recharts-cartesian-grid line {
+  stroke: var(--border-subtle);
+}
+
+/* Tooltip background is set via an inline `style` prop, so it needs
+   !important to win over that — there's no other way to theme it
+   without editing the chart components themselves. */
+[data-theme="glass"] .recharts-default-tooltip {
+  background: var(--surface-elevated) !important;
+  border-color: var(--border-default) !important;
+}
+
+[data-theme="glass"] .recharts-default-tooltip .recharts-tooltip-item,
+[data-theme="glass"] .recharts-default-tooltip .recharts-tooltip-item-name,
+[data-theme="glass"] .recharts-default-tooltip .recharts-tooltip-item-value,
+[data-theme="glass"] .recharts-default-tooltip .recharts-tooltip-label {
+  color: var(--text-primary) !important;
+}
+
+/* Native <select> dropdowns (e.g. the language picker) are deliberately
+   dark-styled, and the popup option list is rendered by the browser
+   itself rather than styled by our normal component CSS. The .app-card
+   remap above would otherwise darken its text while the box stays dark
+   navy, making it unreadable — so pin both the closed box and every
+   option explicitly, with !important since browsers are inconsistent
+   about which styles they honor on native option lists. */
+[data-theme="glass"] select {
+  color: #f5f6fa !important;
+  background-color: #1b2230 !important;
+}
+
+[data-theme="glass"] select option {
+  color: #f5f6fa !important;
+  background-color: #1b2230 !important;
+}
+
+/* Same issue, same fix, for text/number inputs (e.g. the "Minutes" field
+   in Log a session) — they're deliberately dark-styled like the select,
+   so pin their text color explicitly rather than let the .app-card
+   remap darken it against an unchanged dark background. */
+[data-theme="glass"] .app-card input.text-ink-50,
+[data-theme="glass"] .app-card textarea.text-ink-50 {
+  color: #f5f6fa !important;
+}

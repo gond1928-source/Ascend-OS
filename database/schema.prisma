@@ -1,0 +1,31 @@
+// Prisma schema — not yet wired to the app (API routes currently read
+// data/starter-data.json). Run `npx prisma migrate dev` once a real
+// DATABASE_URL is set to start persisting sessions for real.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id              String   @id @default(uuid())
+  language        String
+  kind            String   // "coding" | "watching"
+  startedAt       DateTime
+  endedAt         DateTime
+  durationMinutes Int
+  source          String   // "manual" | "activitywatch" | "timer"
+  note            String?
+  createdAt       DateTime @default(now())
+}
+
+model User {
+  id    String @id @default(uuid())
+  name  String
+  xp    Int    @default(0)
+  level Int    @default(1)
+}

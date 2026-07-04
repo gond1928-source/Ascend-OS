@@ -1,0 +1,90 @@
+/*
+ * tokens.css — Semantic design tokens for Ascend OS
+ *
+ * Rules:
+ *  1. Components reference ONLY these tokens, never raw hex values.
+ *  2. Themes override these variables in their own file.
+ *  3. Add new semantic slots here before using them in components.
+ *
+ * Slot taxonomy:
+ *  --surface-*       Background layers (app shell, panels, cards)
+ *  --text-*          Foreground / typography
+ *  --accent-*        Interactive / highlight colors
+ *  --border-*        Dividers and outlines
+ *  --shadow-*        Elevation
+ *  --blur-*          Backdrop-filter values
+ *  --radius-*        Border radius scale
+ *  --spacing-*       Layout spacing scale
+ *  --transition-*    Motion / easing
+ *  --font-*          Typography
+ */
+
+:root {
+  /* ── Surfaces ────────────────────────────────────────────────────── */
+  --surface-app:        #0a0d12;   /* outermost shell background        */
+  --surface-sidebar:    #0e1218;   /* sidebar background                */
+  --surface-panel:      #141923;   /* cards, panels, modals             */
+  --surface-elevated:   #1b2230;   /* hovered/active cards              */
+  --surface-overlay:    #262f42;   /* dropdowns, tooltips               */
+
+  /* ── Text ───────────────────────────────────────────────────────── */
+  --text-primary:       #f5f6fa;   /* headings, primary labels          */
+  --text-secondary:     #a7afc2;   /* sub-labels, descriptions          */
+  --text-muted:         #717a92;   /* disabled, placeholders            */
+
+  /* ── Accents ────────────────────────────────────────────────────── */
+  --accent-primary:     #7c6cf6;   /* violet — main CTA, active states  */
+  --accent-success:     #3ddc97;   /* mint — positive / coding          */
+  --accent-warning:     #f5b94d;   /* amber — caution / learning        */
+  --accent-danger:      #f25f7a;   /* rose — errors / streaks broken    */
+  --accent-info:        #4dc8f5;   /* sky — info / watching             */
+
+  /* ── Borders ────────────────────────────────────────────────────── */
+  --border-subtle:      rgba(255,255,255,0.06);
+  --border-default:     rgba(255,255,255,0.10);
+  --border-strong:      rgba(255,255,255,0.18);
+  --border-accent:      rgba(124,108,246,0.40);
+
+  /* ── Shadows ────────────────────────────────────────────────────── */
+  --shadow-sm:          0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:          0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:          0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow:        0 0 0 1px rgba(124,108,246,0.15),
+                        0 8px 30px -10px rgba(124,108,246,0.35);
+
+  /* ── Blur ───────────────────────────────────────────────────────── */
+  --blur-none:          blur(0px);
+  --blur-sm:            blur(4px);
+  --blur-md:            blur(12px);
+  --blur-lg:            blur(24px);
+  --blur-xl:            blur(48px);
+
+  /* ── Radius ─────────────────────────────────────────────────────── */
+  --radius-sm:          6px;
+  --radius-md:          10px;
+  --radius-lg:          16px;
+  --radius-xl:          20px;
+  --radius-full:        9999px;
+
+  /* ── Spacing ────────────────────────────────────────────────────── */
+  --space-1:            4px;
+  --space-2:            8px;
+  --space-3:            12px;
+  --space-4:            16px;
+  --space-5:            20px;
+  --space-6:            24px;
+  --space-8:            32px;
+  --space-10:           40px;
+  --space-12:           48px;
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  --font-display:       var(--font-display, "Inter", system-ui, sans-serif);
+  --font-body:          var(--font-body, "Inter", system-ui, sans-serif);
+  --font-mono:          var(--font-mono, "JetBrains Mono", monospace);
+
+  /* ── Transitions ────────────────────────────────────────────────── */
+  --transition-fast:    100ms ease;
+  --transition-base:    180ms ease;
+  --transition-slow:    320ms ease;
+  --transition-spring:  300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}

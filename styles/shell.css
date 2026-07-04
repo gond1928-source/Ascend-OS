@@ -1,0 +1,570 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   shell.css — AppShell · IconRail · NavPanel · Card · ThemeToggle
+   
+   All color values via CSS custom properties.
+   Glass overrides at the bottom under [data-theme="glass"].
+───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Shell ───────────────────────────────────────────────────────────────── */
+
+.shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--surface-app);
+}
+
+.shell-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  position: relative;
+  padding-top: 56px; /* reserved strip for the fixed .topbar-actions above */
+}
+
+/* ── Icon Rail (~52px) ───────────────────────────────────────────────────── */
+
+.icon-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+  flex-shrink: 0;
+  height: 100vh;
+  padding: 12px 0;
+  gap: 4px;
+  background: var(--surface-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  position: relative;
+  z-index: 10;
+}
+
+.icon-rail-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+
+.icon-rail-brand:hover {
+  background: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+}
+
+.icon-rail-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  width: 100%;
+  padding: 0 8px;
+}
+
+.icon-rail-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.icon-rail-btn:hover {
+  background: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.icon-rail-btn--active {
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+.icon-rail-indicator {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent-primary);
+}
+
+/* "Coming soon" dot on icon */
+.icon-rail-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  opacity: 0.7;
+  border: 1px solid var(--surface-sidebar);
+}
+
+.icon-rail-settings {
+  margin-top: auto;
+}
+
+/* ── Nav Panel (~220px) ──────────────────────────────────────────────────── */
+
+.nav-panel {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--surface-panel);
+  border-right: 1px solid var(--border-subtle);
+  padding: 0;
+}
+
+/* Identity */
+.nav-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px 10px;
+}
+
+.nav-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-info) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-avatar-initials {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+}
+
+.nav-identity-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.2;
+  truncate: true;
+}
+
+.nav-identity-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* XP bar in nav panel */
+.nav-xp-track {
+  margin: 4px 14px 0;
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--surface-elevated);
+  overflow: hidden;
+}
+
+.nav-xp-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-info));
+  transition: width 700ms ease;
+}
+
+.nav-xp-label {
+  padding: 4px 14px 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  opacity: 0.6;
+}
+
+/* Divider */
+.nav-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 8px 0;
+}
+
+/* Section */
+.nav-section {
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nav-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.nav-section-label-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding: 0 4px;
+  margin-bottom: 6px;
+}
+
+.nav-section-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-section-action:hover:not(:disabled) {
+  background: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.nav-section-action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Nav row */
+.nav-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-row:hover {
+  background: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.nav-row--active {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-row--active .nav-row-icon {
+  color: var(--accent-primary);
+}
+
+.nav-row-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.nav-row-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Search bar in documents */
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 4px;
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-elevated);
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: text;
+}
+
+/* Theme section at bottom */
+.nav-theme {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+
+.app-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.app-card:hover {
+  border-color: var(--border-default);
+}
+
+.app-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.app-card-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.app-card-title {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ── Top bar actions (Customize / Notifications) ────────────────────────── */
+
+.topbar-actions {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-item {
+  position: relative;
+}
+
+.topbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.topbar-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.topbar-btn--active {
+  color: var(--accent-primary);
+  border-color: var(--border-accent);
+}
+
+.topbar-icon-btn {
+  padding: 9px;
+}
+
+.topbar-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  min-width: 230px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
+  animation: pageIn 0.12s ease both;
+}
+
+.topbar-panel--right {
+  right: 0;
+}
+
+.topbar-panel--wide {
+  min-width: 270px;
+}
+
+.topbar-panel-title {
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.topbar-panel-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.topbar-panel-hint strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.topbar-panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ── ThemeToggle ─────────────────────────────────────────────────────────── */
+
+.theme-toggle-group {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--border-subtle);
+}
+
+.theme-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: calc(var(--radius-md) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.theme-toggle-btn:hover {
+  color: var(--text-secondary);
+}
+
+.theme-toggle-btn--active {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Page fade-in ─────────────────────────────────────────────────────────── */
+
+.shell-main > * {
+  animation: pageIn 0.15s ease both;
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Glass overrides ─────────────────────────────────────────────────────── */
+
+[data-theme="glass"] .shell {
+  background: transparent;
+}
+
+[data-theme="glass"] .icon-rail {
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border-right-color: var(--border-default);
+}
+
+[data-theme="glass"] .nav-panel {
+  background: rgba(255, 255, 255, 0.40);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border-right-color: var(--border-default);
+}
+
+[data-theme="glass"] .app-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="glass"] .icon-rail-brand {
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+[data-theme="glass"] .nav-search {
+  background: rgba(255, 255, 255, 0.40);
+}
+
+[data-theme="glass"] .theme-toggle-group {
+  background: rgba(100, 110, 140, 0.12);
+}
+
+[data-theme="glass"] .theme-toggle-btn--active {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+[data-theme="glass"] .nav-xp-track {
+  background: rgba(100, 110, 140, 0.15);
+}
