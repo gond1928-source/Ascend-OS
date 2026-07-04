@@ -27,9 +27,6 @@ Thumbs.db
 # vscode
 .vscode/
 
-# screenshots / personal images
-projects images/
-Screenshots/
 
 # temp files
 temp/
