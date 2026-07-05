@@ -10,6 +10,7 @@ import { StreakHeatmap } from "@/components/charts/streak-heatmap";
 import { SessionTimeline } from "@/components/charts/session-timeline";
 import { formatMinutes, formatDurationCompact } from "@/lib/utils";
 import { Flame, Code2, Tv, Trophy } from "lucide-react";
+import { CODING_COLOR, LEARNING_COLOR } from "@/constants/themes";
 import { TrendPoint } from "@/types/analytics";
 import { TrendBadge } from "@/components/ui/trend-badge";
 
@@ -61,10 +62,10 @@ export default function AnalyticsPage() {
       </header>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatPill icon={Code2} label="Coding" value={formatMinutes(data.totalCodingMinutes)} accent="#3ddc97" trend={data.trend.codingMinutes} />
-        <StatPill icon={Tv} label="Watching" value={formatMinutes(data.totalWatchingMinutes)} accent="#7c6cf6" trend={data.trend.watchingMinutes} />
+        <StatPill icon={Code2} label="Coding" value={formatMinutes(data.totalCodingMinutes)} accent={CODING_COLOR} trend={data.trend.codingMinutes} />
+        <StatPill icon={Tv} label="Watching" value={formatMinutes(data.totalWatchingMinutes)} accent={LEARNING_COLOR} trend={data.trend.watchingMinutes} />
         <StatPill icon={Flame} label="Streak" value={`${data.streak.currentStreak}d`} accent="#f5b94d" />
-        <StatPill icon={Trophy} label="Top language" value={data.mostUsedLanguage ?? "—"} accent="#4dc8f5" />
+        <StatPill icon={Trophy} label="Top language" value={data.mostUsedLanguage ?? "—"} accent="#7c6cf6" />
       </div>
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-5">

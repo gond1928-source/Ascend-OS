@@ -3,6 +3,12 @@
  *
  * This is the existing UI translated into tokens.
  * No visual change. Applied via [data-theme="dark"] on <html>.
+ *
+ * IMPORTANT: do not declare --status-* variables here. Those are pinned
+ * globally in tokens.css (:root) on purpose — activity/monitoring colors
+ * (coding, learning, warnings, errors) must stay identical across every
+ * theme. Only --accent-*, --surface-*, --text-*, --border-*, --shadow-*,
+ * etc. belong in theme files.
  */
 
 [data-theme="dark"] {

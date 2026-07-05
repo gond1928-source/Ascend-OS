@@ -39,6 +39,25 @@
   --accent-danger:      #f25f7a;   /* rose — errors / streaks broken    */
   --accent-info:        #4dc8f5;   /* sky — info / watching             */
 
+  /* ── Status (semantic activity/monitoring colors) ──────────────────
+   * PINNED GLOBALLY. Unlike --accent-*, these must NEVER be redefined
+   * inside a [data-theme="..."] block — that's exactly what caused
+   * status colors to drift when themes were introduced. Dark.css and
+   * Glass.css intentionally do not touch these; every theme inherits
+   * them unchanged straight from :root.
+   *
+   * Use these for genuine activity/monitoring meaning (CODING badges,
+   * typing-detected indicators, WATCHING/learning badges, status pills).
+   * Use --accent-* for general UI chrome, buttons, and atmosphere —
+   * those are allowed to shift per theme.
+   */
+  --status-coding:      #3ddc97;   /* green — coding, typing detected   */
+  --status-learning:    #4dc8f5;   /* blue — learning / watching        */
+  --status-warning:     #f5b94d;   /* amber — caution                   */
+  --status-error:       #f25f7a;   /* rose — errors, streak broken      */
+  --status-success:     #3ddc97;   /* alias of coding-green             */
+  --status-idle:        #717a92;   /* neutral gray — idle / other       */
+
   /* ── Borders ────────────────────────────────────────────────────── */
   --border-subtle:      rgba(255,255,255,0.06);
   --border-default:     rgba(255,255,255,0.10);

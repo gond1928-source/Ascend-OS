@@ -27,9 +27,9 @@ function StatusDot({ status }: { status: DotStatus }) {
   return (
     <span className={cn("inline-block h-2 w-2 flex-shrink-0 rounded-full", {
       "bg-base-600":                   status === "idle",
-      "bg-accent-mint animate-pulse":  status === "running" || status === "connected",
-      "bg-accent-amber animate-pulse": status === "polling",
-      "bg-accent-rose":                status === "error",
+      "bg-status-coding animate-pulse":  status === "running" || status === "connected",
+      "bg-status-warning animate-pulse": status === "polling",
+      "bg-status-error":                status === "error",
     })} />
   );
 }
@@ -48,7 +48,7 @@ function StatusRow({
         {sub && <p className="font-mono text-[10px] text-ink-500">{sub}</p>}
       </div>
       {Icon && (
-        <span className={cn("text-ink-500", status === "connected" || status === "running" ? "text-accent-mint" : "")}>
+        <span className={cn("text-ink-500", status === "connected" || status === "running" ? "text-status-coding" : "")}>
           <Icon className="h-4 w-4" />
         </span>
       )}
@@ -59,9 +59,9 @@ function StatusRow({
 // ── Category badge ────────────────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, string> = {
-  coding:        "bg-accent-mint/15 text-accent-mint",
-  learning:      "bg-accent-sky/15 text-accent-sky",
-  entertainment: "bg-accent-rose/15 text-accent-rose",
+  coding:        "bg-status-coding/15 text-status-coding",
+  learning:      "bg-status-learning/15 text-status-learning",
+  entertainment: "bg-status-error/15 text-status-error",
   idle:          "bg-base-700 text-ink-500",
   other:         "bg-base-700 text-ink-500",
 };
@@ -79,7 +79,7 @@ function CategoryBadge({ category }: { category: string }) {
 function SignalRow({ ok, label, value }: { ok: boolean; label: string; value: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`flex-shrink-0 font-mono text-[10px] ${ok ? "text-accent-mint" : "text-accent-rose"}`}>
+      <span className={`flex-shrink-0 font-mono text-[10px] ${ok ? "text-status-coding" : "text-status-error"}`}>
         {ok ? "✓" : "✗"}
       </span>
       <span className="font-mono text-[10px] text-ink-500 w-28 flex-shrink-0">{label}</span>
@@ -177,7 +177,7 @@ export default function MonitoringPage() {
               </div>
               <div className="flex flex-shrink-0 items-center gap-2">
                 {currentLanguage && (
-                  <span className="font-mono text-[10px] text-accent-mint">{currentLanguage}</span>
+                  <span className="font-mono text-[10px] text-status-coding">{currentLanguage}</span>
                 )}
                 <CategoryBadge category={currentSnapshot.category} />
               </div>
@@ -194,8 +194,8 @@ export default function MonitoringPage() {
             )}
 
             {codingIdleCountdownSecs !== null && codingIdleCountdownSecs < 30 && (
-              <div className="flex items-center gap-1.5 rounded border border-accent-gold/20 bg-accent-gold/10 px-2 py-1.5">
-                <span className="font-mono text-[10px] text-accent-gold">
+              <div className="flex items-center gap-1.5 rounded border border-status-warning/20 bg-status-warning/10 px-2 py-1.5">
+                <span className="font-mono text-[10px] text-status-warning">
                   ⚠ Coding pauses in {codingIdleCountdownSecs}s — type to continue
                 </span>
               </div>
@@ -208,19 +208,19 @@ export default function MonitoringPage() {
         )}
 
         {pendingSessionCount > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-accent-mint/20 bg-accent-mint/10 px-3 py-2">
-            <Radio className="h-3.5 w-3.5 text-accent-mint" />
-            <p className="font-mono text-[11px] text-accent-mint">
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-status-coding/20 bg-status-coding/10 px-3 py-2">
+            <Radio className="h-3.5 w-3.5 text-status-coding" />
+            <p className="font-mono text-[11px] text-status-coding">
               {pendingSessionCount} session{pendingSessionCount !== 1 ? "s" : ""} ready to commit
             </p>
           </div>
         )}
 
         {nativeStatus === "error" && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-accent-rose/20 bg-accent-rose/10 px-3 py-2">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-accent-rose" />
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-error/20 bg-status-error/10 px-3 py-2">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-status-error" />
             <div>
-              <p className="font-mono text-[11px] text-accent-rose">{nativeError}</p>
+              <p className="font-mono text-[11px] text-status-error">{nativeError}</p>
               <p className="mt-0.5 font-mono text-[10px] text-ink-500">
                 macOS: check Accessibility permissions in System Settings → Privacy &amp; Security.
                 Linux: ensure xdotool is installed.
@@ -233,7 +233,7 @@ export default function MonitoringPage() {
           <Button
             variant={nativeRunning ? "outline" : "primary"}
             onClick={nativeRunning ? stopNative : startNative}
-            className={nativeRunning ? "border-accent-rose/40 text-accent-rose" : ""}
+            className={nativeRunning ? "border-status-error/40 text-status-error" : ""}
           >
             {nativeRunning ? "Stop monitoring" : "Start monitoring"}
           </Button>
@@ -265,9 +265,9 @@ export default function MonitoringPage() {
         />
 
         {awPending.length > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-accent-sky/20 bg-accent-sky/10 px-3 py-2">
-            <CheckCircle2 className="h-3.5 w-3.5 text-accent-sky" />
-            <p className="font-mono text-[11px] text-accent-sky">
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-status-learning/20 bg-status-learning/10 px-3 py-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-status-learning" />
+            <p className="font-mono text-[11px] text-status-learning">
               {awPending.length} sessions imported from ActivityWatch
             </p>
           </div>
@@ -277,7 +277,7 @@ export default function MonitoringPage() {
           <Button
             variant={awEnabled ? "outline" : "primary"}
             onClick={() => setAwEnabled((e) => !e)}
-            className={awEnabled ? "border-accent-rose/40 text-accent-rose" : ""}
+            className={awEnabled ? "border-status-error/40 text-status-error" : ""}
           >
             {awEnabled ? "Stop" : "Enable"}
           </Button>

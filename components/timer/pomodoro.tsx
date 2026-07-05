@@ -10,8 +10,8 @@ type Phase = "work" | "short-break" | "long-break";
 
 const PHASE_CONFIG: Record<Phase, { label: string; minutes: number; color: string }> = {
   work: { label: "Focus", minutes: 25, color: "text-accent-violet" },
-  "short-break": { label: "Short Break", minutes: 5, color: "text-accent-mint" },
-  "long-break": { label: "Long Break", minutes: 15, color: "text-accent-sky" },
+  "short-break": { label: "Short Break", minutes: 5, color: "text-status-coding" },
+  "long-break": { label: "Long Break", minutes: 15, color: "text-status-learning" },
 };
 
 export function Pomodoro() {
@@ -119,8 +119,8 @@ export function Pomodoro() {
           <p className="font-mono text-[10px] uppercase text-ink-500">Pomodoros</p>
         </div>
         {lastXP !== null && (
-          <div className="rounded-lg border border-accent-mint/20 bg-accent-mint/10 px-3 py-1.5">
-            <p className="font-mono text-xs text-accent-mint">+{lastXP} XP</p>
+          <div className="rounded-lg border border-status-coding/20 bg-status-coding/10 px-3 py-1.5">
+            <p className="font-mono text-xs text-status-coding">+{lastXP} XP</p>
           </div>
         )}
       </div>

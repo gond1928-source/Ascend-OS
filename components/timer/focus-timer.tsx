@@ -66,15 +66,15 @@ export function FocusTimer() {
           variant="outline"
           onClick={handleSave}
           disabled={elapsedSeconds < 60}
-          className="border-accent-mint/40 text-accent-mint hover:border-accent-mint/80"
+          className="border-status-coding/40 text-status-coding hover:border-status-coding/80"
         >
           Save
         </Button>
       </div>
 
       {savedXP !== null && (
-        <div className="rounded-lg border border-accent-mint/20 bg-accent-mint/10 px-4 py-2">
-          <p className="font-mono text-sm text-accent-mint">Session saved! +{savedXP} XP</p>
+        <div className="rounded-lg border border-status-coding/20 bg-status-coding/10 px-4 py-2">
+          <p className="font-mono text-sm text-status-coding">Session saved! +{savedXP} XP</p>
         </div>
       )}
     </div>

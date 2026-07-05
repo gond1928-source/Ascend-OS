@@ -6,6 +6,11 @@
  * so the gradient bleeds through (genuine glass effect).
  *
  * Applied via [data-theme="glass"] on <html>.
+ *
+ * IMPORTANT: do not declare --status-* variables here. Those are pinned
+ * globally in tokens.css (:root) on purpose — activity/monitoring colors
+ * (coding, learning, warnings, errors) must stay identical across every
+ * theme, including this one.
  */
 
 [data-theme="glass"] {
@@ -21,7 +26,13 @@
   /* ── Text ───────────────────────────────────────────────────────────── */
   --text-primary:       #1a1d27;
   --text-secondary:     #4a5068;
-  --text-muted:         #8b91a8;
+  /* Was #8b91a8 (~2.3:1 contrast against glass card surfaces — fails WCAG
+     AA for normal text, which is exactly why small captions/metadata read
+     as "washed out" throughout Documents, Monitoring, etc). This darker
+     value clears ~4.8:1 while staying visibly lighter/less emphasized
+     than --text-secondary, so the hierarchy (primary > secondary > muted)
+     is preserved without sacrificing legibility. */
+  --text-muted:         #565d80;
 
   /* ── Accents ────────────────────────────────────────────────────────── */
   --accent-primary:     #6655e0;
@@ -174,6 +185,18 @@
 [data-theme="glass"] .recharts-default-tooltip .recharts-tooltip-item-value,
 [data-theme="glass"] .recharts-default-tooltip .recharts-tooltip-label {
   color: var(--text-primary) !important;
+}
+
+/* Small chips that carry their own fixed-dark background (e.g. the "PDF"
+   tag, or an idle/other category badge using bg-base-700) must keep
+   fixed-light text — the .app-card remap above assumes text sits on the
+   card's own now-light surface, which isn't true for a badge that paints
+   its own dark chip on top of it. Higher specificity than the generic
+   remap (two classes on the same element beats one), so this wins. */
+[data-theme="glass"] .app-card .bg-base-700.text-ink-500,
+[data-theme="glass"] .app-card .bg-base-700.text-ink-400,
+[data-theme="glass"] .app-card .bg-base-800.text-ink-500 {
+  color: rgba(255, 255, 255, 0.65);
 }
 
 /* Native <select> dropdowns (e.g. the language picker) are deliberately

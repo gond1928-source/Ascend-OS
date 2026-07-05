@@ -7,12 +7,12 @@ export function FocusCard({ codingMinutes, trend }: { codingMinutes: number; tre
   const hours = Math.floor(codingMinutes / 60);
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-base-900/70 p-6 shadow-lg shadow-black/20 backdrop-blur-sm">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-mint/8 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-status-coding/8 via-transparent to-transparent" />
       <div className="relative">
         <div className="mb-3 flex items-start justify-between">
           <p className="font-mono text-[10px] uppercase tracking-widest text-ink-500">Coding (30d)</p>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-mint/15">
-            <Code2 className="h-4 w-4 text-accent-mint" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-status-coding/15">
+            <Code2 className="h-4 w-4 text-status-coding" />
           </div>
         </div>
         <div className="flex items-center gap-2">

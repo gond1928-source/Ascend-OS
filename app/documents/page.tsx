@@ -3,8 +3,20 @@
 /**
  * Documents — placeholder.
  * Will hold: (a) exported analytics reports, (b) study material library.
+ *
+ * Previously these panels were raw divs with hardcoded bg-base-900/border
+ * classes instead of the shared `Card` (.app-card) component, so none of
+ * the theme-aware surface/text handling applied here — that's why this
+ * page specifically looked washed out in Glass while Dashboard/Analytics
+ * (which do use Card) looked fine. Also removed the blanket `opacity-40`
+ * that was wrapping entire rows: dimming the row's icon+text+badge all
+ * together compounds with the text already being a muted color, which is
+ * what pushed several captions below readable contrast. "Not built yet"
+ * is now conveyed by the disabled cursor + a fixed muted tone instead of
+ * multiplying opacity on top of it.
  */
 
+import { Card } from "@/components/ui/card";
 import { FileText, BookOpen, BarChart2, Plus, Search } from "lucide-react";
 
 export default function DocumentsPage() {
@@ -20,15 +32,15 @@ export default function DocumentsPage() {
         </span>
       </header>
 
-      {/* Search bar placeholder */}
-      <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-base-900/60 px-4 py-2.5">
+      {/* Search bar placeholder — now an app-card so it themes correctly */}
+      <div className="app-card flex items-center gap-3 !p-3">
         <Search className="h-3.5 w-3.5 flex-shrink-0 text-ink-500" />
         <span className="text-[13px] text-ink-500">Search documents…</span>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Analytics Reports */}
-        <div className="rounded-xl border border-white/[0.06] bg-base-900/60 p-5">
+        <Card>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10">
@@ -39,26 +51,26 @@ export default function DocumentsPage() {
                 <p className="font-mono text-[10px] text-ink-500">Weekly · Monthly exports</p>
               </div>
             </div>
-            <button className="flex items-center gap-1 rounded-md border border-white/[0.08] px-2.5 py-1.5 font-mono text-[10px] text-ink-500 opacity-40 cursor-not-allowed">
+            <button className="flex cursor-not-allowed items-center gap-1 rounded-md border border-white/[0.08] px-2.5 py-1.5 font-mono text-[10px] text-ink-500">
               <Plus className="h-3 w-3" /> New report
             </button>
           </div>
           <div className="space-y-2">
             {["June 2025 — Monthly", "Week 26 · Jun 23–29", "Week 25 · Jun 16–22"].map((name, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg border border-white/[0.04] bg-base-800/40 px-3.5 py-2.5 opacity-40">
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-white/[0.04] bg-base-800/40 px-3.5 py-2.5">
                 <FileText className="h-3.5 w-3.5 flex-shrink-0 text-ink-500" />
                 <p className="flex-1 text-[12px] text-ink-300">{name}</p>
-                <span className="font-mono text-[10px] text-ink-500">PDF</span>
+                <span className="rounded bg-base-700 px-1.5 py-0.5 font-mono text-[9px] text-ink-500">PDF</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 font-mono text-[11px] text-ink-600">
+          <p className="mt-3 font-mono text-[11px] text-ink-500">
             Auto-generated reports will appear here once the export engine is built.
           </p>
-        </div>
+        </Card>
 
         {/* Study Library */}
-        <div className="rounded-xl border border-white/[0.06] bg-base-900/60 p-5">
+        <Card>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-sky/10">
@@ -69,18 +81,18 @@ export default function DocumentsPage() {
                 <p className="font-mono text-[10px] text-ink-500">Notes · PDFs · Links</p>
               </div>
             </div>
-            <button className="flex items-center gap-1 rounded-md border border-white/[0.08] px-2.5 py-1.5 font-mono text-[10px] text-ink-500 opacity-40 cursor-not-allowed">
+            <button className="flex cursor-not-allowed items-center gap-1 rounded-md border border-white/[0.08] px-2.5 py-1.5 font-mono text-[10px] text-ink-500">
               <Plus className="h-3 w-3" /> Add material
             </button>
           </div>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <BookOpen className="mb-3 h-8 w-8 text-ink-600" />
+            <BookOpen className="mb-3 h-8 w-8 text-ink-500" />
             <p className="text-[13px] text-ink-500">No study materials yet</p>
-            <p className="mt-1 font-mono text-[11px] text-ink-600">
+            <p className="mt-1 font-mono text-[11px] text-ink-500">
               This section will hold notes, PDFs and links linked to Projects.
             </p>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

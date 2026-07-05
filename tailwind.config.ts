@@ -62,6 +62,19 @@ const config: Config = {
           rose:   "#f25f7a",
         },
 
+        // ── Status (semantic activity/monitoring colors) ─────────────────
+        // Pinned via --status-* vars, which are declared once in tokens.css
+        // and never overridden by any theme file — these must look the
+        // same in Dark, Glass, and any future theme.
+        status: {
+          coding:   "var(--status-coding)",
+          learning: "var(--status-learning)",
+          warning:  "var(--status-warning)",
+          error:    "var(--status-error)",
+          success:  "var(--status-success)",
+          idle:     "var(--status-idle)",
+        },
+
         // ── Borders ──────────────────────────────────────────────────────
         border: {
           subtle:  "var(--border-subtle)",

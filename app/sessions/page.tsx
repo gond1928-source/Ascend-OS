@@ -13,9 +13,14 @@ export default function SessionsPage() {
   const xp = useXP(sessions);
   const [lastXP, setLastXP] = useState<number | null>(null);
 
-  function handleSubmit(draft: SessionDraft) {
-    const { xpEarned } = addSession(draft);
-    setLastXP(xpEarned);
+  function handleSubmit(drafts: SessionDraft[]) {
+    // Multiple drafts happen when the form logs both coding and watching
+    // minutes in one submission — each still needs its own addSession call
+    // (that's what persists it and computes its own XP), but they share a
+    // runId set by the form, so session-grouping.ts renders them as one
+    // combined block, same as a native-tracker run.
+    const totalXP = drafts.reduce((sum, draft) => sum + addSession(draft).xpEarned, 0);
+    setLastXP(totalXP);
     setTimeout(() => setLastXP(null), 3000);
   }
 
@@ -38,8 +43,8 @@ export default function SessionsPage() {
           <Card title="Log a session" eyebrow="Manual entry">
             <SessionForm onSubmit={handleSubmit} />
             {lastXP !== null && (
-              <div className="mt-3 rounded-lg border border-accent-mint/20 bg-accent-mint/10 px-3 py-2">
-                <p className="font-mono text-[11px] text-accent-mint">+{lastXP} XP earned</p>
+              <div className="mt-3 rounded-lg border border-status-success/20 bg-status-success/10 px-3 py-2">
+                <p className="font-mono text-[11px] text-status-success">+{lastXP} XP earned</p>
               </div>
             )}
           </Card>
