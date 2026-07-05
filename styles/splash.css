@@ -1,0 +1,102 @@
+/*
+ * splash.css — Boot / loading screen effects for Ascend OS
+ *
+ * Kept separate from tokens.css because these keyframes are only ever
+ * used during the startup sequence, not by the rest of the shell.
+ */
+
+@keyframes ascend-shimmer {
+  0%   { background-position: -160% 0; }
+  100% { background-position: 260% 0; }
+}
+
+@keyframes ascend-drift-a {
+  0%,
+  100% { transform: translate3d(-4%, -3%, 0) scale(1); }
+  50%  { transform: translate3d(3%, 4%, 0) scale(1.08); }
+}
+
+@keyframes ascend-drift-b {
+  0%,
+  100% { transform: translate3d(3%, 4%, 0) scale(1.05); }
+  50%  { transform: translate3d(-4%, -2%, 0) scale(0.98); }
+}
+
+@keyframes ascend-rise {
+  0%   { transform: translateY(0); opacity: 0; }
+  12%  { opacity: var(--particle-o, 0.55); }
+  85%  { opacity: var(--particle-o, 0.55); }
+  100% { transform: translateY(-38px); opacity: 0; }
+}
+
+.ascend-splash {
+  background:
+    radial-gradient(60% 55% at 50% 38%, rgba(124, 108, 246, 0.14), transparent 70%),
+    radial-gradient(80% 65% at 50% 100%, rgba(10, 13, 18, 0.9), #05060a 70%),
+    #06070c;
+}
+
+.ascend-splash__blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  will-change: transform;
+}
+
+.ascend-splash__blob--violet {
+  background: radial-gradient(circle, rgba(124, 108, 246, 0.5), transparent 65%);
+  animation: ascend-drift-a 14s ease-in-out infinite;
+}
+
+.ascend-splash__blob--sky {
+  background: radial-gradient(circle, rgba(77, 200, 245, 0.35), transparent 65%);
+  animation: ascend-drift-b 17s ease-in-out infinite;
+}
+
+.ascend-splash__particle {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%);
+  animation-name: ascend-rise;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.ascend-splash__bar-track {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ascend-splash__bar-fill-det {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #4dc8f5, #7c6cf6);
+  transition: width 120ms linear;
+  overflow: hidden;
+}
+
+.ascend-splash__bar-fill-det::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  background-size: 250% 100%;
+  animation: ascend-shimmer 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ascend-splash__blob,
+  .ascend-splash__particle,
+  .ascend-splash__bar-fill-det::after {
+    animation: none !important;
+  }
+}

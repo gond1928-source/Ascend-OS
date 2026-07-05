@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { SessionProvider } from "@/lib/session-context";
 import { AppShell } from "@/components/ui/app-shell";
+import { SplashGate } from "@/components/ui/splash-gate";
 import "./globals.css";
 
 const inter = Inter({
@@ -37,7 +38,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider defaultTheme="dark">
           <SessionProvider>
-            <AppShell>{children}</AppShell>
+            <SplashGate>
+              <AppShell>{children}</AppShell>
+            </SplashGate>
           </SessionProvider>
         </ThemeProvider>
       </body>

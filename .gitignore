@@ -17,6 +17,10 @@ out/
 # typescript
 *.tsbuildinfo
 
+# zip files
+ascend-os.zip
+src-tauri/src-tauri.zip
+
 # tauri build files
 src-tauri/target/
 src-tauri/icons/
