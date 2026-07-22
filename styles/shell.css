@@ -1,11 +1,33 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   shell.css — AppShell · IconRail · NavPanel · Card · ThemeToggle
-   
-   All color values via CSS custom properties.
-   Glass overrides at the bottom under [data-theme="glass"].
+   shell.css — Persistent single-pane shell: Sidebar · Workspace ·
+   Panel primitive · Continuous list rows.
+
+   One nav surface, one workspace pane. Two things were removed to get
+   here, each after proving to be a real, confirmed redundancy rather than
+   a genuine second surface:
+   - A contextual right panel (earlier pass) — inconsistent in practice
+     (state-reset bugs, preview-vs-open confusion) and largely duplicating
+     information the workspace pane already shows once click-to-open
+     reliably opens full content.
+   - The icon-only nav rail + separate collapsible contextual sidebar
+     (this pass) — collapsed into one always-labeled sidebar after
+     confirming the contextual sidebar's "Projects" list was rendering the
+     exact same project rows the /projects workspace itself already showed,
+     at the same time. See design brief §1's revision note.
+
+   Structural rules this file enforces (see design brief §1, §4):
+   - The sidebar is one fixed-width, always-expanded surface — icon + label
+     per row, no icon-only collapsed state anywhere in the shell.
+   - "Panel" (formerly "Card") is a hairline-bordered region, not a floating
+     shadow/glow box. Continuous lists use hairline row dividers, not gaps
+     between separate boxes.
+
+   All color values via CSS custom properties. Glass theme overrides live at
+   the bottom under [data-theme="glass"] (glass is a separate, pre-existing
+   alternate theme, out of scope for this reset — see design-brief handoff).
 ───────────────────────────────────────────────────────────────────────────── */
 
-/* ── Shell ───────────────────────────────────────────────────────────────── */
+/* ── Shell root ──────────────────────────────────────────────────────────── */
 
 .shell {
   display: flex;
@@ -17,534 +39,795 @@
 
 .shell-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+}
+
+.shell-workspace {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
   position: relative;
-  padding-top: 56px; /* reserved strip for the fixed .topbar-actions above */
 }
 
-/* ── Icon Rail (~52px) ───────────────────────────────────────────────────── */
+.shell-center {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+}
 
-.icon-rail {
+/* ── Sidebar (240px, fixed, always expanded — icon + label per row) ────────
+   One persistent nav surface, no icon-only collapsed state. Structure,
+   top to bottom: brand → primary nav → Recents → spacer → hairline divider
+   → identity block (design brief §1 single-sidebar shell). */
+
+.app-sidebar {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 52px;
+  width: 240px;
   flex-shrink: 0;
   height: 100vh;
-  padding: 12px 0;
-  gap: 4px;
-  background: #16181d; /* always dark — not theme-dependent, in dark or glass */
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-sidebar);
+  border-right: 1px solid var(--border-subtle);
   position: relative;
   z-index: 10;
+  /* NOT overflow:hidden — the Notifications/Customize flyouts anchor off
+     the identity dropdown and intentionally render outside this 240px
+     box (design brief §1's dropdown-from-identity spirit). Clipping here
+     was hiding them entirely: the dropdown itself still opened (it stays
+     within the sidebar's own bounds), but clicking further into
+     Notifications or Customize produced an invisible, clipped panel —
+     it looked like the buttons did nothing. Nothing here actually needs
+     the clip: Recents already scrolls internally via its own
+     overflow-y:auto regardless of this container's setting. */
 }
 
-.icon-rail-brand {
+.app-sidebar-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
-  margin-bottom: 12px;
+  gap: 8px;
+  padding: 16px 16px 14px;
   flex-shrink: 0;
-  transition: background var(--transition-fast);
-}
-
-.icon-rail-brand:hover {
-  background: color-mix(in srgb, var(--accent-primary) 25%, transparent);
-}
-
-.icon-rail-nav {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
-  padding: 0 8px;
-  flex-shrink: 0;
-}
-
-.icon-rail-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  color: rgba(255, 255, 255, 0.55);
-  text-decoration: none;
-  transition: background var(--transition-fast), color var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.icon-rail-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.icon-rail-btn--active {
-  color: #16181d;
-  background: #ffffff;
-}
-
-.icon-rail-indicator {
-  display: none;
-}
-
-/* "Coming soon" dot on icon */
-.icon-rail-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  opacity: 0.7;
-  border: 1px solid #16181d;
-}
-
-/* Fills the leftover space between the nav icons and Settings — tabs sit
-   at the bottom of this flexible area, so the empty gap ends up *above*
-   them, matching the reference's layout rather than being wasted space. */
-.icon-rail-plate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  width: 100%;
-  min-height: 96px;
-  justify-content: flex-end;
-  gap: 6px;
-  padding-bottom: 12px;
-}
-
-/* Both tabs stay fully inside the rail's own width — no overflow tricks,
-   so they can never overlap the sidebar next to it. */
-.icon-rail-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  padding: 14px 0;
-  border-radius: 12px;
-}
-
-.icon-rail-tab--primary {
-  gap: 6px;
-  background: linear-gradient(180deg, #fbfbfd 0%, #e9ebf1 100%);
-}
-
-.icon-rail-tab--secondary {
-  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
-  opacity: 0.85;
-  box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.4);
-}
-
-.icon-rail-tab-text {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: #2a2f3a;
-  white-space: nowrap;
-}
-
-.icon-rail-tab-text--muted {
-  font-size: 8px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-}
-
-.icon-rail-tab-version {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.06em;
-  color: #9099a8;
-  white-space: nowrap;
-}
-
-/* Settings gets its own permanent dark button (not just an icon), like
-   the reference's bottom-most rounded square — always visible, regardless
-   of active state, since it's the one icon-rail item meant to read as a
-   persistent control rather than a nav destination. */
-.icon-rail-settings {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  margin-top: 0;
-}
-
-.icon-rail-settings:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.icon-rail-settings.icon-rail-btn--active {
-  background: #ffffff;
-  color: #16181d;
-}
-
-/* ── Nav Panel (~220px) ──────────────────────────────────────────────────── */
-
-.nav-panel {
-  display: flex;
-  flex-direction: column;
-  width: 220px;
-  flex-shrink: 0;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: var(--surface-panel);
-  border-right: 1px solid var(--border-subtle);
-  padding: 0;
-}
-
-/* Identity */
-.nav-identity {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 14px 10px;
-}
-
-.nav-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-info) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-avatar-initials {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  line-height: 1;
-}
-
-.nav-identity-name {
-  font-size: 12px;
-  font-weight: 500;
   color: var(--text-primary);
-  line-height: 1.2;
-  truncate: true;
+  text-decoration: none;
 }
 
-.nav-identity-sub {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-muted);
-  line-height: 1;
-  margin-top: 2px;
+.app-sidebar-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--accent-primary);
+  flex-shrink: 0;
 }
 
-/* XP bar in nav panel */
-.nav-xp-track {
-  margin: 4px 14px 0;
-  height: 2px;
-  border-radius: 9999px;
-  background: var(--surface-elevated);
-  overflow: hidden;
+.app-sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.nav-xp-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(to right, var(--accent-primary), var(--accent-info));
-  transition: width 700ms ease;
-}
+/* Primary nav — icon + label rows, replacing the old icon-only rail
+   buttons. Active state is unchanged in spirit: accent-colored icon+label
+   plus a single thin indicator bar, no pill, no filled background. */
 
-.nav-xp-label {
-  padding: 4px 14px 0;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-muted);
-  line-height: 1.4;
-  opacity: 0.6;
-}
-
-/* Divider */
-.nav-divider {
-  height: 1px;
-  background: var(--border-subtle);
-  margin: 8px 0;
-}
-
-/* Section */
-.nav-section {
-  padding: 0 8px;
+.app-sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  padding: 4px 10px;
+  flex-shrink: 0;
 }
 
-.nav-section-label {
+.app-sidebar-nav-item {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 2px 6px 4px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-}
-
-.nav-section-label-text {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  padding: 0 4px;
-  margin-bottom: 6px;
-}
-
-.nav-section-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  text-decoration: none;
   border: none;
   background: transparent;
-  color: var(--text-muted);
   cursor: pointer;
+  width: 100%;
+  text-align: left;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.nav-section-action:hover:not(:disabled) {
+.app-sidebar-nav-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.app-sidebar-nav-item:hover {
   background: var(--border-subtle);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
-.nav-section-action:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+.app-sidebar-nav-item--active {
+  color: var(--accent-primary);
+  background: transparent;
 }
 
-/* Nav row */
-.nav-row {
+.app-sidebar-nav-indicator {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+}
+
+/* ── Recents — recently opened projects/documents ──────────────────────── */
+
+.app-sidebar-section {
+  margin-top: 8px;
+  padding: 0 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sidebar-section-label {
+  padding: 6px 10px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.app-sidebar-recent-row {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  font-weight: 400;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  text-decoration: none;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  font-size: var(--text-sm);
+  border: none;
+  background: transparent;
   cursor: pointer;
-  user-select: none;
+  width: 100%;
+  text-align: left;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.nav-row:hover {
+.app-sidebar-recent-row:hover {
   background: var(--border-subtle);
   color: var(--text-primary);
 }
 
-.nav-row--active {
-  background: var(--surface-elevated);
-  color: var(--text-primary);
-  font-weight: 500;
-  box-shadow: var(--shadow-sm);
-}
-
-.nav-row--active .nav-row-icon {
-  color: var(--accent-primary);
-}
-
-.nav-row-icon {
+.app-sidebar-recent-row svg {
+  flex-shrink: 0;
   width: 13px;
   height: 13px;
+  color: var(--text-muted);
+}
+
+.app-sidebar-recent-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-sidebar-spacer {
+  flex: 1;
+  min-height: 8px;
+}
+
+/* ── Identity block — pinned to the very bottom, hairline divider above it
+   separating it from the nav content (design brief §1). Quiet, persistent
+   XP/rank display (§7/§8: "small, persistent, secondary... similar to how
+   Discord shows status under a username") and the only entry point to
+   Settings/Notifications/Customize. */
+
+.app-sidebar-identity-wrap {
+  position: relative;
   flex-shrink: 0;
-  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px;
 }
 
-.nav-row-count {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-/* Search bar in documents */
-.nav-search {
+.app-sidebar-identity {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 2px 0 4px;
-  padding: 5px 10px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-elevated);
-  font-size: 11px;
-  color: var(--text-muted);
-  cursor: text;
+  gap: 9px;
+  width: 100%;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
 }
 
-/* Theme section at bottom */
-.nav-theme {
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--border-subtle);
+.app-sidebar-identity:hover {
+  background: var(--border-subtle);
 }
 
-/* ── Card ────────────────────────────────────────────────────────────────── */
-
-.app-card {
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-panel);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
-}
-
-.app-card:hover {
-  border-color: var(--border-default);
-}
-
-.app-card-header {
+.app-sidebar-identity-ring {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
+  align-items: center;
+  justify-content: center;
+  /* conic-gradient progress ring: accent for filled portion, hairline for rest */
+  background: conic-gradient(
+    var(--accent-primary) calc(var(--xp-pct, 0) * 1%),
+    var(--border-default) 0
+  );
+  padding: 2px;
+  flex-shrink: 0;
 }
 
-.app-card-eyebrow {
+.app-sidebar-identity-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
   font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-}
-
-.app-card-title {
-  margin-top: 2px;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-/* ── Top bar actions (Customize / Notifications) ────────────────────────── */
+/* Passive unread cue on the avatar — a bell is no longer persistently
+   visible now that Notifications lives in the dropdown, so this dot is
+   the at-a-glance "something's waiting" signal instead. */
+.app-sidebar-identity-unread {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  border: 2px solid var(--surface-sidebar);
+}
 
-.topbar-actions {
-  position: fixed;
-  top: 20px;
-  right: 24px;
-  z-index: 30;
+.app-sidebar-identity-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-sidebar-identity-name {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-sidebar-identity-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-sidebar-identity-chevron {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+
+/* Primary dropdown from the identity block — Settings/Notifications/
+   Customize's only entry point. Opens upward (bottom-anchored) since the
+   identity block sits at the very bottom of the sidebar. */
+.app-sidebar-identity-menu {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(100% + 4px);
+  padding: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
+  animation: panelInUp 100ms ease both;
+}
+
+.app-sidebar-identity-menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.topbar-item {
-  position: relative;
-}
-
-.topbar-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-elevated);
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-base);
+  text-align: left;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.topbar-btn:hover {
+.app-sidebar-identity-menu-item:hover {
+  background: var(--border-subtle);
   color: var(--text-primary);
-  border-color: var(--border-default);
 }
 
-.topbar-btn--active {
-  color: var(--accent-primary);
-  border-color: var(--border-accent);
-}
+/* ── Panel primitive (formerly "Card") ──────────────────────────────────────
+   Hairline border, small radius, minimal shadow. This is a workspace region,
+   not a floating card — used sparingly, mostly for grouping charts. */
 
-.topbar-icon-btn {
-  padding: 9px;
-}
-
-.topbar-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  min-width: 230px;
-  padding: 14px;
+.panel {
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-subtle);
   background: var(--surface-panel);
-  box-shadow: var(--shadow-lg);
-  z-index: 40;
-  animation: pageIn 0.12s ease both;
+  padding: var(--space-5);
 }
 
-.topbar-panel--right {
-  right: 0;
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
-.topbar-panel--wide {
-  min-width: 270px;
-}
-
-.topbar-panel-title {
-  margin-bottom: 10px;
+.panel-eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
 }
 
-.topbar-panel-hint {
+.panel-title {
+  margin-top: 2px;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Legacy alias — components not yet migrated in this pass still use
+   .app-card; keep it visually identical to .panel rather than maintaining
+   two divergent styles. */
+.app-card,
+.app-card-header,
+.app-card-eyebrow,
+.app-card-title {
+  all: unset;
+}
+.app-card { display: block; }
+.app-card { border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); background: var(--surface-panel); padding: var(--space-5); box-sizing: border-box; }
+.app-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
+.app-card-eyebrow { font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; }
+.app-card-title { margin-top: 2px; font-size: var(--text-md); font-weight: 600; color: var(--text-primary); display: block; }
+
+/* ── Section panel — continuous multi-region container ─────────────────────
+   For places like Analytics' four charts, where several distinct pieces of
+   content need to sit together as ONE bordered surface with internal
+   hairline dividers, rather than each getting its own separately-bordered,
+   separately-padded box with gaps between them (design brief §4/§12 — this
+   is exactly the "grid of boxes, just grayscale now" failure to avoid). */
+
+.section-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  overflow: hidden;
+}
+
+.section-row {
+  display: grid;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-row:last-child {
+  border-bottom: none;
+}
+
+.section-cell {
+  padding: var(--space-5);
+  border-right: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+
+.section-cell:last-child {
+  border-right: none;
+}
+
+.section-cell-header {
+  margin-bottom: var(--space-4);
+}
+
+[data-theme="glass"] .section-panel { border-color: var(--border-default); background: rgba(255, 255, 255, 0.45); backdrop-filter: var(--blur-md); -webkit-backdrop-filter: var(--blur-md); }
+[data-theme="glass"] .section-row { border-color: var(--border-default); }
+[data-theme="glass"] .section-cell { border-color: var(--border-default); }
+
+@media (max-width: 860px) {
+  .section-row { grid-template-columns: 1fr !important; }
+  .section-cell { border-right: none; border-bottom: 1px solid var(--border-subtle); }
+  .section-cell:last-child { border-bottom: none; }
+}
+
+/* ── Continuous list — hairline dividers, not separate boxed rows ──────────
+   Section 4: "A recent activity list should be one flowing list with
+   hairline dividers between rows, not five separate rounded cards." */
+
+.flow-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 2px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast);
+}
+
+.flow-row:last-child {
+  border-bottom: none;
+}
+
+.flow-row--interactive {
+  cursor: pointer;
+  margin: 0 -8px;
+  padding: var(--space-3) 8px;
+  border-radius: var(--radius-sm);
+}
+
+.flow-row--interactive:hover {
+  background: var(--surface-elevated);
+}
+
+.flow-row--selected {
+  background: var(--surface-elevated);
+}
+
+/* ── Grouped list with counts — Linear-style section header + flush rows ───
+   Design brief §11: "any list with natural categories gets a small section
+   header showing the category name + item count... with a chevron to
+   collapse/expand, followed by flush rows... no per-row border or card."
+   First established (unnamed) as App Rules' per-category sections in
+   Phase 1; generalized here so every grouped view (App Rules, Documents/
+   Reports, Study Library, future Projects) shares one definition instead
+   of each re-deriving its own header treatment. */
+
+.grouped-list {
+  margin-bottom: 8px;
+}
+
+.grouped-list-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 2px;
+  cursor: pointer;
+  user-select: none;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+}
+
+.grouped-list-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.grouped-list-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.grouped-list-chevron {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.grouped-list-chevron--open {
+  transform: rotate(90deg);
+}
+
+.grouped-list-empty {
+  padding: 16px 2px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* Small category dot used inline in lists/timelines (Tier 3 usage) */
+.category-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Insight callout — small highlighted (not card) treatment ──────────────
+   Established for Analytics' per-tab insights row (Phase 3). Distinguishes
+   itself from surrounding panel content via grayscale surface elevation only
+   (same --surface-elevated tone already used for hovered/selected flow-rows)
+   — no border, no shadow, no accent color, since accent is reserved for the
+   enumerated Tier 2 uses in the design brief (§2). Reuse this pattern
+   wherever a short, plain-language derived-insight line needs to stand out
+   slightly from its container without becoming a card — e.g. a future
+   Documents-phase report summary. */
+
+.insight-callout {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.insight-callout-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.insight-callout-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.insight-callout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 860px) {
+  .insight-callout-grid { grid-template-columns: 1fr; }
+}
+
+/* Shared stat grid — numbers sit close together sharing dividers rather
+   than each having its own card shell (Section 4). */
+.stat-grid {
+  display: grid;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.stat-grid-cell {
+  padding: var(--space-4);
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.stat-grid-cell:last-child {
+  border-right: none;
+}
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  margin-top: 4px;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-sub {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* Quiet empty state — factual, not apologetic marketing copy */
+.quiet-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.quiet-empty-title {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
+
+.quiet-empty-sub {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* ── Search + sort row (Projects list, design brief §1 revision note:
+   Projects no longer has a redundant sidebar list backing it, so its own
+   search/sort need to be genuinely functional on their own) ───────────── */
+
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.list-toolbar-search {
+  flex: 1;
+}
+
+/* Quiet inline dropdown: small muted label, plain value with a chevron, no
+   border/background on the control itself — reads as a row control, not a
+   boxed button. Same treatment as Settings → App Rules' per-row selects. */
+.sort-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.sort-field:hover,
+.sort-field:focus-within {
+  border-color: var(--border-default);
+}
+
+.sort-field-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  padding: 0 16px 0 0;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23838383' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+
+.sort-select:hover {
+  color: var(--text-primary);
+}
+
+.sort-select:focus {
+  outline: none;
+}
+
+.sort-select option {
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+}
+
+/* ── Flyout panel (Notifications / Customize, nested off the identity
+   dropdown) ─────────────────────────────────────────────────────────────
+ * Previously a top-right floating "Customize" button + bell icon
+ * (top-bar-actions.tsx) — folded into the sidebar's identity dropdown as
+ * of the single-sidebar shell (design brief §1). Same panel content
+ * (NotificationsFlyoutBody / ThemeToggle), same class names apart from
+ * the topbar-* → flyout-panel-* rename, just anchored off a dropdown row
+ * instead of a floating top-right button.
+ */
+
+.flyout-panel {
+  /* Anchored to the right of whichever identity-menu row triggered it. */
+  position: absolute;
+  left: calc(100% + 8px);
+  bottom: 0;
+  min-width: 230px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-lg);
+  z-index: 45;
+  animation: panelIn 100ms ease both;
+}
+
+.flyout-panel--wide { min-width: 270px; }
+.flyout-panel--notifications { min-width: 300px; max-width: 340px; }
+
+/* Unread indicator — design brief §2 Tier 2: one small dot of accent
+   color, nothing else (no tinted background, no glow). Used inline on a
+   notification row, as a small badge on the identity avatar, and next to
+   the "Notifications" row inside the identity dropdown. */
+.notification-unread-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.notification-row {
+  cursor: pointer;
+}
+
+.flyout-panel-title {
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.flyout-panel-hint {
   margin-top: 10px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-muted);
 }
 
-.topbar-panel-hint strong {
+.flyout-panel-hint strong {
   color: var(--text-primary);
   font-weight: 600;
 }
 
-.topbar-panel-empty {
+.flyout-panel-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 20px 10px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -554,7 +837,7 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--border-subtle);
 }
 
@@ -565,79 +848,261 @@
   justify-content: center;
   gap: 4px;
   padding: 4px 6px;
-  border-radius: calc(var(--radius-md) - 2px);
+  border-radius: var(--radius-xs);
   border: none;
   background: transparent;
   color: var(--text-muted);
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 500;
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
   white-space: nowrap;
 }
 
-.theme-toggle-btn:hover {
-  color: var(--text-secondary);
-}
+.theme-toggle-btn:hover { color: var(--text-secondary); }
 
 .theme-toggle-btn--active {
   background: var(--surface-elevated);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
 
-/* ── Page fade-in ─────────────────────────────────────────────────────────── */
+/* ── Page transitions — short, no bounce ───────────────────────────────── */
 
-.shell-main > * {
-  animation: pageIn 0.15s ease both;
+.shell-workspace > * {
+  animation: panelIn 120ms ease both;
 }
 
-@keyframes pageIn {
-  from { opacity: 0; transform: translateY(5px); }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panelInUp {
+  from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Glass overrides ─────────────────────────────────────────────────────── */
 
-[data-theme="glass"] .shell {
-  background: transparent;
-}
+[data-theme="glass"] .shell { background: transparent; }
 
-/* Icon rail intentionally has NO glass override — it stays the same
-   fixed dark color in every theme, per explicit instruction. */
-
-[data-theme="glass"] .nav-panel {
+[data-theme="glass"] .app-sidebar {
   background: rgba(255, 255, 255, 0.40);
   backdrop-filter: var(--blur-md);
   -webkit-backdrop-filter: var(--blur-md);
   border-right-color: var(--border-default);
 }
 
+[data-theme="glass"] .panel,
 [data-theme="glass"] .app-card {
   background: rgba(255, 255, 255, 0.45);
   backdrop-filter: var(--blur-md);
   -webkit-backdrop-filter: var(--blur-md);
   border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
 }
 
-[data-theme="glass"] .icon-rail-brand {
-  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+[data-theme="glass"] .stat-grid { border-color: var(--border-default); }
+[data-theme="glass"] .stat-grid-cell { border-color: var(--border-default); }
+
+[data-theme="glass"] .theme-toggle-group { background: rgba(100, 110, 140, 0.12); }
+[data-theme="glass"] .theme-toggle-btn--active { background: rgba(255, 255, 255, 0.55); }
+
+/* ── Toast (design brief-quiet save/action confirmations) ──────────────────
+   NOT an OS notification — see lib/tauri/bridge.ts's showNotification stub
+   comment. Plain factual text, one small status dot via icon color, no
+   color-washed background (Tier 1 grayscale chrome + sparing Tier 2 accent). */
+
+.toast-host {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
 }
 
-[data-theme="glass"] .nav-search {
-  background: rgba(255, 255, 255, 0.40);
+.toast-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: panelIn 150ms ease both;
 }
 
-[data-theme="glass"] .theme-toggle-group {
-  background: rgba(100, 110, 140, 0.12);
+.toast-item-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--accent-primary);
 }
 
-[data-theme="glass"] .theme-toggle-btn--active {
-  background: rgba(255, 255, 255, 0.55);
+.toast-item--error .toast-item-icon {
+  color: var(--status-error);
 }
 
-[data-theme="glass"] .nav-xp-track {
-  background: rgba(100, 110, 140, 0.15);
+.toast-item-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.toast-item-dismiss {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.toast-item-dismiss:hover {
+  color: var(--text-primary);
+  background: var(--border-subtle);
+}
+
+/* ── Export/Save menu (Document Reader header) ──────────────────────────────
+   Same anchored-dropdown treatment as the sidebar's identity menu (design
+   brief §11 dropdown-from-identity spirit) — small panel, hairline border,
+   no card shadow beyond the standard overlay elevation. */
+
+.export-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 240px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
+  animation: panelIn 100ms ease both;
+}
+
+.export-menu-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.export-menu-formats {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.export-menu-format-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.export-menu-format-btn:hover {
+  color: var(--text-secondary);
+}
+
+.export-menu-format-btn--active {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.export-menu-filename {
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  margin-bottom: 10px;
+}
+
+.export-menu-filename:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.export-menu-save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.export-menu-save-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* ── Activity feed animations ────────────────────────────────────────────
+ * Subtle, native-feeling motion only: a new entry fades + slides in on
+ * mount (naturally plays once per entry, since React only mounts a card
+ * when its key is genuinely new — not on every re-render), a reply editor
+ * expands rather than snapping open, and status color changes ease
+ * instead of jumping. All disabled under prefers-reduced-motion, same
+ * pattern as splash.css.
+ */
+
+@keyframes activityEntryIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes activityReplyExpand {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.activity-entry-in {
+  animation: activityEntryIn 220ms ease both;
+}
+
+.activity-reply-in {
+  animation: activityReplyExpand 150ms ease both;
+}
+
+.activity-status-transition {
+  transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-entry-in,
+  .activity-reply-in {
+    animation: none !important;
+  }
+  .activity-status-transition {
+    transition: none !important;
+  }
 }

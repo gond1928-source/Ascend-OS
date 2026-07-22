@@ -25,26 +25,35 @@ const config: Config = {
         },
 
         // ── Ink / text (semantic + numeric shades) ───────────────────────
+        // Numeric shades carry the same confirmed pure-neutral (R=G=B)
+        // values as tokens.css's --text-primary/secondary/muted (anchored
+        // at 300/500 and 50 below), interpolated for the in-between steps.
+        // This is a config-only fix: every existing `ink-300`,
+        // `bg-base-900/70`, etc. across Settings/Timer/Sessions/
+        // Achievements/Share/Friends and elsewhere is corrected
+        // automatically without touching those component files.
         ink: {
           primary:   "var(--text-primary)",
           secondary: "var(--text-secondary)",
           muted:     "var(--text-muted)",
-          // Numeric shades — dark-theme values with alpha-value slot
-          50:  "rgb(245 246 250 / <alpha-value>)",
-          100: "rgb(234 237 245 / <alpha-value>)",
-          200: "rgb(208 212 228 / <alpha-value>)",
-          300: "rgb(176 184 204 / <alpha-value>)",
-          400: "rgb(140 148 170 / <alpha-value>)",
-          500: "rgb(113 122 146 / <alpha-value>)",
-          600: "rgb(89  96 120 / <alpha-value>)",
+          // Numeric shades — pure neutral, dark-theme values, alpha-value slot
+          50:  "rgb(247 247 245 / <alpha-value>)",  // = --text-primary
+          100: "rgb(225 225 223 / <alpha-value>)",
+          200: "rgb(200 200 198 / <alpha-value>)",
+          300: "rgb(181 180 176 / <alpha-value>)",  // = --text-secondary
+          400: "rgb(155 155 153 / <alpha-value>)",
+          500: "rgb(131 131 131 / <alpha-value>)",  // = --text-muted
+          600: "rgb(105 105 105 / <alpha-value>)",
         },
 
-        // ── Base surfaces (dark scale with alpha-value slot) ─────────────
+        // ── Base surfaces (pure neutral dark scale, alpha-value slot) ────
+        // Mapped onto the same confirmed elevation scale as tokens.css's
+        // --surface-* (700≈overlay, 800≈elevated, 900≈panel, 950≈sidebar).
         base: {
-          700: "rgb(38 47 66   / <alpha-value>)",
-          800: "rgb(27 34 48   / <alpha-value>)",
-          900: "rgb(20 25 35   / <alpha-value>)",
-          950: "rgb(14 18 24   / <alpha-value>)",
+          700: "rgb(54 54 54 / <alpha-value>)",   // = --surface-overlay
+          800: "rgb(40 40 40 / <alpha-value>)",   // = --surface-elevated
+          900: "rgb(28 28 28 / <alpha-value>)",   // = --surface-panel
+          950: "rgb(19 19 19 / <alpha-value>)",   // = --surface-sidebar
         },
 
         // ── Accents (CSS-var semantic + static aliases) ──────────────────
@@ -67,12 +76,13 @@ const config: Config = {
         // and never overridden by any theme file — these must look the
         // same in Dark, Glass, and any future theme.
         status: {
-          coding:   "var(--status-coding)",
-          learning: "var(--status-learning)",
-          warning:  "var(--status-warning)",
-          error:    "var(--status-error)",
-          success:  "var(--status-success)",
-          idle:     "var(--status-idle)",
+          coding:      "var(--status-coding)",
+          learning:    "var(--status-learning)",
+          distraction: "var(--status-distraction)",
+          warning:     "var(--status-warning)",
+          error:       "var(--status-error)",
+          success:     "var(--status-success)",
+          idle:        "var(--status-idle)",
         },
 
         // ── Borders ──────────────────────────────────────────────────────

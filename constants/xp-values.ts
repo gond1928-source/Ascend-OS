@@ -11,7 +11,11 @@ export const QUEST_XP: Record<string, number> = {
   code_30:       60,
   code_60:       120,
   code_120:      240,
-  new_language:  100,
   watch_60:      60,
   sessions_3:    90,
 };
+
+// Reflection XP — flat, participation-only. Same amount no matter what's
+// answered or whether a note is included; never scales, never penalizes a
+// missed day. See types/reflection.ts / hooks/useReflection.ts.
+export const REFLECTION_XP_FLAT = 15;

@@ -207,13 +207,13 @@
    option explicitly, with !important since browsers are inconsistent
    about which styles they honor on native option lists. */
 [data-theme="glass"] select {
-  color: #f5f6fa !important;
-  background-color: #1b2230 !important;
+  color: #f7f7f5 !important;
+  background-color: #282828 !important;
 }
 
 [data-theme="glass"] select option {
-  color: #f5f6fa !important;
-  background-color: #1b2230 !important;
+  color: #f7f7f5 !important;
+  background-color: #282828 !important;
 }
 
 /* Same issue, same fix, for text/number inputs (e.g. the "Minutes" field
@@ -222,5 +222,5 @@
    remap darken it against an unchanged dark background. */
 [data-theme="glass"] .app-card input.text-ink-50,
 [data-theme="glass"] .app-card textarea.text-ink-50 {
-  color: #f5f6fa !important;
+  color: #f7f7f5 !important;
 }

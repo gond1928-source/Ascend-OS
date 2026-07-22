@@ -1,27 +1,13 @@
 // Prevents an additional console window on Windows in release mode.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::Manager;
-
-mod commands;
-mod tracker;
-
+// All plugin registration, command handlers, and setup logic live in
+// lib.rs (the `ascend_os_lib` library crate) — this file used to build
+// its own separate `tauri::Builder` chain here instead of calling into
+// it, which meant everything registered in lib.rs (including the Opener
+// plugin) was dead code that never actually ran, no matter how many
+// times the project was rebuilt. main.rs should just be a thin entry
+// point; see lib.rs's `run()` for the real Builder chain.
 fn main() {
-    tauri::Builder::default()
-        // Native commands are registered here as the app grows.
-        .invoke_handler(tauri::generate_handler![
-            tracker::get_window_snapshot,
-        ])
-        // Show the window only once the frontend is fully loaded — avoids
-        // the white flash on startup.
-        .setup(|app| {
-            #[cfg(debug_assertions)]
-            {
-                let window = app.get_webview_window("main").unwrap();
-                window.open_devtools();
-            }
-            Ok(())
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running Ascend OS");
+    ascend_os_lib::run();
 }

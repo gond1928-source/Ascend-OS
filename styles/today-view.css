@@ -1,0 +1,598 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   today-view.css — Dashboard → "Today View" (design brief §7).
+   Continuous, workflow-first layout. No stat-card grid, no gradient washes,
+   no hero-sized numbers. Aliveness comes from real running data, not motion.
+───────────────────────────────────────────────────────────────────────────── */
+
+.today-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
+
+.today-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.today-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.today-greeting {
+  margin-top: 2px;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.today-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.today-link:hover { color: var(--text-primary); }
+
+/* ── Hero growth strip (refinement pass) ────────────────────────────────
+   Reuses .growth-strip/.growth-item (already defined below for a quiet
+   streak/quest line) as the hero's "alive" signal — today's focus,
+   streak, XP earned today. Plain text + tiny icons, no card, no fill. */
+
+.growth-strip--hero {
+  margin-top: 10px;
+  gap: 16px;
+}
+
+.growth-strip--hero .growth-item {
+  gap: 5px;
+  color: var(--text-muted);
+}
+
+.growth-strip--hero .growth-item svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.growth-strip--hero .growth-item strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ── Current-state banner — only rendered when something is actually
+   happening. A quietly ticking monospace timer, not a glowing card. ──────── */
+
+.current-state {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 24px;
+}
+
+.current-state-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-coding);
+  flex-shrink: 0;
+  animation: liveDotPulse 2s ease-in-out infinite;
+}
+
+@keyframes liveDotPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.current-state-body { flex: 1; min-width: 0; }
+
+.current-state-label {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.current-state-sub {
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.current-state-timer {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+/* ── Section headers ────────────────────────────────────────────────────── */
+
+.today-section {
+  margin-bottom: 28px;
+}
+
+.today-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.today-section-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.today-section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ── Timeline row ────────────────────────────────────────────────────────── */
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.timeline-row:last-child { border-bottom: none; }
+
+.timeline-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-time {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 68px;
+}
+
+.timeline-duration {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Distraction indicator — a small secondary signal, never a loud badge */
+.timeline-distraction-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Timeline row detail (inline accordion) ─────────────────────────────────
+   Replaces the old right-panel click-through (design brief §1's revision
+   note): expands directly under the clicked row instead of opening a side
+   panel. Indented to 80px so it lines up under .timeline-label, not under
+   the time column. */
+
+.timeline-row-detail {
+  padding: 4px 2px 14px 80px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ── Recent workspaces row ─────────────────────────────────────────────── */
+
+.workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.workspace-row:last-child { border-bottom: none; }
+.workspace-row:hover { color: var(--text-primary); }
+
+.workspace-row-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.workspace-row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workspace-row-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Quiet growth strip (streak/quests) — plain factual copy, no exclamation ── */
+
+.growth-strip {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.growth-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.growth-item strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ── Reflection (Phase 2) ───────────────────────────────────────────────
+   Row-level actions for the single daily prompt — deliberately small and
+   quiet, matching the Timeline's own text scale. No color here ever
+   signals "missed" or "incomplete"; the unanswered state uses the same
+   muted circle treatment as an incomplete quest. ───────────────────────── */
+
+.reflection-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.reflection-note-input {
+  flex: 1 1 180px;
+  min-width: 140px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 5px 9px;
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+}
+
+.reflection-note-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.reflection-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.reflection-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* ── Recent Workspaces tabs (Phase 2) — plain text tabs, no boxed pill
+   group; active tab reads via accent color + underline only. ──────────── */
+
+.workspace-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.workspace-tab {
+  padding: 0 0 8px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.workspace-tab:hover {
+  color: var(--text-secondary);
+}
+
+.workspace-tab--active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+/* ── Quick Actions bar (Phase 2) — small, equal-weight buttons, hairline
+   only, no fill except on hover. ───────────────────────────────────────── */
+
+.quick-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.quick-action-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  background: var(--border-subtle);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Quick Actions hierarchy (refinement pass) ──────────────────────────
+   Start Monitoring is the one action taken every session — it gets the
+   sanctioned "primary CTA" use of the accent color (design brief §2 Tier
+   2), a small solid fill, nothing else on the page uses this treatment.
+   Secondary actions get quieter icon opacity so the primary genuinely
+   reads first, without changing their existing ghost/hairline shape. */
+
+.quick-action-btn--primary {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+.quick-action-btn--primary .quick-action-icon {
+  color: #fff;
+}
+
+.quick-action-btn--primary:hover {
+  background: var(--accent-primary);
+  filter: brightness(1.08);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+
+.quick-action-btn--primary:hover .quick-action-icon {
+  color: #fff;
+}
+
+/* Stop state — still the primary slot, but a neutral outline instead of a
+   solid fill, so "stop" doesn't read as an equally celebratory action. */
+.quick-action-btn--primary-active {
+  background: transparent;
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.quick-action-btn--primary-active .quick-action-icon {
+  color: var(--accent-primary);
+}
+
+.quick-action-btn--primary-active:hover {
+  background: var(--border-subtle);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.quick-action-btn--primary-active:hover .quick-action-icon {
+  color: var(--accent-primary);
+}
+
+.quick-action-btn--secondary .quick-action-icon {
+  opacity: 0.8;
+}
+
+/* ── Onboarding-style empty state (Today Timeline, refinement pass) ─────
+   Builds on the shared .quiet-empty (shell.css) rather than replacing it
+   — same tone, same spacing, just adds an icon slot and an optional
+   one-click next action so the empty state has somewhere to go. */
+
+.quiet-empty--onboarding {
+  gap: 10px;
+}
+
+.quiet-empty-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-bottom: 2px;
+}
+
+.quiet-empty-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.quiet-empty-action:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.quiet-empty-action:active {
+  transform: scale(0.97);
+}
+
+/* ── Daily Quests completion summary (refinement pass) ───────────────────
+   One thin bar + two small mono stats above the row list — the same
+   visual language as each quest's own progress bar, just summarized.
+   Deliberately no ring, no badge, no color-coded percentage: professional,
+   not game-HUD. */
+
+.quests-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.quests-summary-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--border-default);
+  overflow: hidden;
+}
+
+.quests-summary-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary-muted);
+  transition: width 500ms ease;
+}
+
+.quests-summary-xp {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  padding-left: 10px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* ── Reflection framing (refinement pass) ────────────────────────────── */
+
+.reflection-framing {
+  margin: -4px 0 12px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.timeline-row--reflection {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+/* ── Recent workspaces polish (refinement pass) ─────────────────────────
+   Stronger hover affordance (a subtle background wash on the row, not a
+   card), and a small period tag for reports so Weekly/Monthly reads at a
+   glance without repeating it inside the title text. */
+
+.workspace-row {
+  border-radius: var(--radius-sm);
+  padding-left: 6px;
+  padding-right: 6px;
+  margin: 0 -6px;
+}
+
+.workspace-row:hover {
+  background: var(--surface-elevated);
+}
+
+.workspace-row:hover .workspace-row-icon {
+  color: var(--accent-primary);
+}
+
+.workspace-row-tag {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xs);
+  padding: 1px 6px;
+}
+
+/* ── Motion (refinement pass) ────────────────────────────────────────────
+   Same pattern already established for the Project Activity feed
+   (shell.css's activityEntryIn) — fade + slight rise, once on mount,
+   staggered per section via inline animation-delay in page.tsx. Disabled
+   entirely under prefers-reduced-motion, same as every other animation in
+   this app. */
+
+@keyframes todaySectionIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.today-fade-in {
+  animation: todaySectionIn 320ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-fade-in {
+    animation: none !important;
+  }
+  .current-state-dot {
+    animation: none !important;
+  }
+  .quick-action-btn:active,
+  .quiet-empty-action:active {
+    transform: none !important;
+  }
+}
+
+.quick-action-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.quick-action-btn:hover .quick-action-icon {
+  color: var(--accent-primary);
+}

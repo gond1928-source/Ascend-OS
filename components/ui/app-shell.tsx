@@ -1,18 +1,26 @@
 "use client";
 
-import { IconRail } from "./icon-rail";
-import { NavPanel } from "./nav-panel";
-import { TopBarActions } from "./top-bar-actions";
+import { Suspense } from "react";
+import { Sidebar } from "./sidebar";
+import { CommandPalette } from "./command-palette";
+import { ToastHost } from "./toast-host";
+import { ShellProvider } from "@/lib/shell-context";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="shell">
-      <IconRail />
-      <NavPanel />
-      <main className="shell-main">
-        <TopBarActions />
-        {children}
-      </main>
-    </div>
+    <ShellProvider>
+      <div className="shell">
+        <Suspense fallback={<div className="app-sidebar" />}>
+          <Sidebar />
+        </Suspense>
+        <div className="shell-main">
+          <div className="shell-center">
+            <div className="shell-workspace">{children}</div>
+          </div>
+        </div>
+      </div>
+      <CommandPalette />
+      <ToastHost />
+    </ShellProvider>
   );
 }

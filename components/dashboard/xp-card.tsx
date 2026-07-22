@@ -7,7 +7,7 @@ export function XPCard({
 }) {
   const pct = (xpIntoLevel / (xpIntoLevel + xpToNextLevel)) * 100;
   const tierColor: Record<string, string> = {
-    S: "#f5b94d", A: "#4dc8f5", B: "#3ddc97", C: "#7c6cf6", D: "#717a92",
+    S: "#f5b94d", A: "#4dc8f5", B: "#3ddc97", C: "#7c6cf6", D: "#838383",
   };
   const color = tier ? (tierColor[tier] ?? "#7c6cf6") : "#7c6cf6";
 

@@ -1,9 +1,14 @@
 import { Session } from "@/types/session";
+import { DistractionRecord } from "@/types/distraction";
 import {
   AnalyticsSummary,
   DailyActivity,
+  DistractionBreakdownEntry,
+  DistractionSummary,
+  DistractionTrendPoint,
   HeatmapCell,
   LanguageBreakdown,
+  PeakHour,
   StreakInfo,
   TrendPoint,
   WeeklyTrendPoint,
@@ -37,6 +42,57 @@ function addDays(date: Date, days: number): Date {
 
 function formatDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+// ── Range scoping — Today / This Week / All Time tabs ──────────────────────
+//
+// getAnalyticsSummary/getDistractionSummary/getTopPeakHours all just sum
+// whatever array they're handed — they don't know about "today" or "this
+// week" themselves. These helpers filter Session[]/DistractionRecord[] down
+// to a range *before* handing them to those existing functions, so the same
+// pure engine functions produce a correctly-scoped total without any new
+// aggregation logic. (getDailyActivity/getWeeklyTrend are the exception —
+// they already window internally off "today", so callers pass the full
+// unfiltered array to those and just control the day/week count.)
+
+export type AnalyticsRange = "today" | "week" | "all";
+
+export function getRangeBounds(range: AnalyticsRange): { start: Date | null; end: Date } {
+  const today = startOfDay(new Date());
+  if (range === "today") return { start: today, end: today };
+  if (range === "week") return { start: addDays(today, -6), end: today };
+  return { start: null, end: today };
+}
+
+export function filterSessionsByRange(sessions: Session[], range: AnalyticsRange): Session[] {
+  const { start, end } = getRangeBounds(range);
+  if (!start) return sessions;
+  return sessions.filter((s) => {
+    const d = startOfDay(new Date(s.startedAt));
+    return d >= start && d <= end;
+  });
+}
+
+export function filterDistractionsByRange(distractions: DistractionRecord[], range: AnalyticsRange): DistractionRecord[] {
+  const { start, end } = getRangeBounds(range);
+  if (!start) return distractions;
+  return distractions.filter((d) => {
+    const day = startOfDay(new Date(d.startedAt));
+    return day >= start && day <= end;
+  });
+}
+
+/** How many whole weeks of history exist, oldest-session to today — used to
+ * size the All Time weekly-trend chart so it covers full history rather than
+ * a hardcoded 8-week window. Always at least 1. */
+export function getWeeksOfHistory(sessions: Session[]): number {
+  if (sessions.length === 0) return 1;
+  const earliest = sessions.reduce(
+    (min, s) => Math.min(min, startOfDay(new Date(s.startedAt)).getTime()),
+    startOfDay(new Date()).getTime(),
+  );
+  const days = (startOfDay(new Date()).getTime() - earliest) / 86400000;
+  return Math.max(1, Math.ceil(days / 7) + 1);
 }
 
 export function getLanguageBreakdown(sessions: Session[]): LanguageBreakdown[] {
@@ -222,6 +278,27 @@ export function getWeekOverWeekTrend(sessions: Session[]): WeekOverWeekTrend {
   };
 }
 
+/** Same current-vs-previous-7-days comparison as getWeekOverWeekTrend, but
+ * for distraction minutes — kept separate since distractions live in their
+ * own record type (see distraction.ts's header). Used by the This Week
+ * insights callout ("distraction time up/down vs. last week"). */
+export function getDistractionWeekOverWeek(distractions: DistractionRecord[]): TrendPoint {
+  const today = startOfDay(new Date());
+  const currentStart = addDays(today, -6);
+  const previousEnd = addDays(currentStart, -1);
+  const previousStart = addDays(previousEnd, -6);
+
+  let current = 0;
+  let previous = 0;
+  for (const d of distractions) {
+    const day = startOfDay(new Date(d.startedAt));
+    if (day >= currentStart && day <= today) current += d.durationMinutes;
+    else if (day >= previousStart && day <= previousEnd) previous += d.durationMinutes;
+  }
+
+  return toTrendPoint(current, previous);
+}
+
 export function getAnalyticsSummary(sessions: Session[]): AnalyticsSummary {
   const totalCodingMinutes = sessions
     .filter((s) => s.kind === "coding")
@@ -249,4 +326,98 @@ export function getAnalyticsSummary(sessions: Session[]): AnalyticsSummary {
     sessionCount: sessions.length,
     trend: getWeekOverWeekTrend(sessions),
   };
+}
+
+// ── Distraction analytics ─────────────────────────────────────────────────────
+//
+// Distraction records live in a separate store from Session[] (see
+// types/distraction.ts's header for why), so every function below takes
+// both arrays explicitly rather than assuming distraction data is folded
+// into `sessions`.
+
+export function getDistractionBreakdown(distractions: DistractionRecord[]): DistractionBreakdownEntry[] {
+  const map = new Map<string, number>();
+  for (const d of distractions) {
+    map.set(d.label, (map.get(d.label) ?? 0) + d.durationMinutes);
+  }
+  return Array.from(map.entries())
+    .map(([label, minutes]) => ({ label, minutes }))
+    .sort((a, b) => b.minutes - a.minutes);
+}
+
+export function getDistractionTrend(
+  sessions: Session[],
+  distractions: DistractionRecord[],
+  days = 30,
+): DistractionTrendPoint[] {
+  const today = startOfDay(new Date());
+  const buckets = new Map<string, DistractionTrendPoint>();
+
+  for (let i = days - 1; i >= 0; i--) {
+    const key = formatDateKey(addDays(today, -i));
+    buckets.set(key, { date: key, distractionMinutes: 0, productiveMinutes: 0 });
+  }
+
+  for (const s of sessions) {
+    const bucket = buckets.get(toDateKey(s.startedAt));
+    if (bucket) bucket.productiveMinutes += s.durationMinutes;
+  }
+
+  for (const d of distractions) {
+    const bucket = buckets.get(toDateKey(d.startedAt));
+    if (bucket) bucket.distractionMinutes += d.durationMinutes;
+  }
+
+  return Array.from(buckets.values());
+}
+
+export function getDistractionSummary(
+  sessions: Session[],
+  distractions: DistractionRecord[],
+): DistractionSummary {
+  const totalProductiveMinutes = sessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+  const totalDistractionMinutes = distractions.reduce((sum, d) => sum + d.durationMinutes, 0);
+
+  const denominator = totalProductiveMinutes + totalDistractionMinutes;
+  const focusRatio = denominator > 0 ? totalProductiveMinutes / denominator : 1;
+  const productiveToDistractedRatio =
+    totalDistractionMinutes > 0 ? totalProductiveMinutes / totalDistractionMinutes : null;
+
+  return {
+    totalDistractionMinutes,
+    totalProductiveMinutes,
+    focusRatio,
+    productiveToDistractedRatio,
+    topDistractions: getDistractionBreakdown(distractions),
+    trend: getDistractionTrend(sessions, distractions, 30),
+    contextSwitchCount: distractions.length,
+  };
+}
+
+/**
+ * Buckets total active minutes (coding + watching) by hour-of-day, so
+ * reports can call out "most productive between 9–11am" etc. Uses the
+ * ISO timestamp's UTC hour — the same convention `startOfDay`/`toDateKey`
+ * already use throughout this engine, so it stays consistent with every
+ * other date-bucketed figure here.
+ */
+export function getPeakActivityHours(sessions: Session[]): PeakHour[] {
+  const buckets = new Array(24).fill(0) as number[];
+  for (const s of sessions) {
+    const hour = new Date(s.startedAt).getUTCHours();
+    buckets[hour] += s.durationMinutes;
+  }
+  return buckets.map((minutes, hour) => ({ hour, minutes }));
+}
+
+/**
+ * Ranked list of the (start, end) hour range(s) with the most cumulative
+ * activity — used by the report engine to describe "peak activity hours"
+ * in plain language rather than dumping a raw 24-bucket histogram.
+ */
+export function getTopPeakHours(sessions: Session[], count = 3): PeakHour[] {
+  return getPeakActivityHours(sessions)
+    .filter((h) => h.minutes > 0)
+    .sort((a, b) => b.minutes - a.minutes)
+    .slice(0, count);
 }

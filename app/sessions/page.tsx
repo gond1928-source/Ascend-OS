@@ -1,75 +1,179 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * Session History — the full session list, reached via "View all" on the
+ * Focus page's Recent Sessions section. Per the brief: this is user
+ * content, not a setting, so it stays its own page rather than moving
+ * into Settings, and it stays raw history rather than duplicating
+ * anything Analytics already shows.
+ *
+ * Reuses, unchanged: groupSessionsForDisplay (lib/session-grouping.ts),
+ * SessionRow (components/sessions/session-row.tsx — the same row Focus's
+ * Recent Sessions uses), and the SessionContext mutators. The only new
+ * piece of logic here is the search/filter/time-range narrowing below,
+ * applied to the raw Session[] before grouping.
+ */
+
+import "@/styles/monitoring.css";
+import { useMemo, useState } from "react";
 import { useSessions } from "@/hooks/useSessions";
-import { useXP } from "@/hooks/useXP";
-import { Card } from "@/components/ui/card";
-import { SessionHistory } from "@/components/sessions/session-history";
-import { SessionForm } from "@/components/sessions/session-form";
-import { SessionDraft } from "@/types/session";
+import { Session } from "@/types/session";
+import { groupSessionsForDisplay, SessionGroup } from "@/lib/session-grouping";
+import { SessionRow, badgeLabel } from "@/components/sessions/session-row";
+import { EditSessionModal } from "@/components/sessions/edit-session-modal";
+import { Search, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type SourceFilter = "all" | "manual" | "tracked";
+type TimeFilter = "all" | "today" | "7d" | "30d";
+
+const SOURCE_OPTIONS: { id: SourceFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "manual", label: "Manual" },
+  { id: "tracked", label: "Tracked" },
+];
+
+const TIME_OPTIONS: { id: TimeFilter; label: string }[] = [
+  { id: "all", label: "All time" },
+  { id: "today", label: "Today" },
+  { id: "7d", label: "Last 7 days" },
+  { id: "30d", label: "Last 30 days" },
+];
+
+function withinTimeFilter(session: Session, filter: TimeFilter): boolean {
+  if (filter === "all") return true;
+  const started = new Date(session.startedAt).getTime();
+  const now = Date.now();
+  const days = filter === "today" ? 1 : filter === "7d" ? 7 : 30;
+  const cutoff = filter === "today"
+    ? new Date().setHours(0, 0, 0, 0)
+    : now - days * 86400000;
+  return started >= cutoff;
+}
 
 export default function SessionsPage() {
-  const { sessions, isLoading, addSession, deleteSession } = useSessions();
-  const xp = useXP(sessions);
-  const [lastXP, setLastXP] = useState<number | null>(null);
+  const { sessions, updateSession, deleteSession } = useSessions();
+  const [query, setQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [editingGroup, setEditingGroup] = useState<SessionGroup | null>(null);
 
-  function handleSubmit(drafts: SessionDraft[]) {
-    // Multiple drafts happen when the form logs both coding and watching
-    // minutes in one submission — each still needs its own addSession call
-    // (that's what persists it and computes its own XP), but they share a
-    // runId set by the form, so session-grouping.ts renders them as one
-    // combined block, same as a native-tracker run.
-    const totalXP = drafts.reduce((sum, draft) => sum + addSession(draft).xpEarned, 0);
-    setLastXP(totalXP);
-    setTimeout(() => setLastXP(null), 3000);
-  }
+  // Time filter applies to the raw sessions (each fragment's own
+  // startedAt) before grouping — source/search filters apply after
+  // grouping, since "Manual"/"Tracked" and the language name are both
+  // properties of the group, not any single underlying session.
+  const timeFiltered = useMemo(
+    () => sessions.filter((s) => withinTimeFilter(s, timeFilter)),
+    [sessions, timeFilter],
+  );
 
-  // SessionHistory groups same-language, same-run coding+watching sessions
-  // into a single visual block; deleting a group must delete every
-  // underlying session id it represents, not just one of them.
+  const groups = useMemo(() => {
+    let g = groupSessionsForDisplay(timeFiltered);
+    if (sourceFilter !== "all") {
+      const want = sourceFilter === "manual" ? "Manual" : "Tracked";
+      g = g.filter((group) => badgeLabel(group) === want);
+    }
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      g = g.filter((group) => group.language.toLowerCase().includes(q));
+    }
+    return g;
+  }, [timeFiltered, sourceFilter, query]);
+
+  const editingSessions = editingGroup
+    ? sessions.filter((s) => editingGroup.sessionIds.includes(s.id))
+    : [];
+
   function handleDeleteGroup(ids: string[]) {
     ids.forEach((id) => deleteSession(id));
   }
 
+  function handleSaveEdit(edits: { id: string; language: string; durationMinutes: number }[]) {
+    edits.forEach((e) => updateSession(e.id, { language: e.language, durationMinutes: e.durationMinutes }));
+  }
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-8">
-      <header>
-        <p className="font-mono text-xs uppercase tracking-widest text-accent-violet">Sessions</p>
-        <h1 className="mt-1 font-display text-2xl text-ink-50">Session history</h1>
+    <div className="mx-auto max-w-2xl space-y-5 p-7 pb-10">
+      <header className="flex items-end justify-between pt-1">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em]" style={{ color: "var(--accent-primary)" }}>Activity</p>
+          <h1 className="mt-0.5 text-[22px] font-semibold" style={{ color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>Session history</h1>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-1">
-          <Card title="Log a session" eyebrow="Manual entry">
-            <SessionForm onSubmit={handleSubmit} />
-            {lastXP !== null && (
-              <div className="mt-3 rounded-lg border border-status-success/20 bg-status-success/10 px-3 py-2">
-                <p className="font-mono text-[11px] text-status-success">+{lastXP} XP earned</p>
-              </div>
-            )}
-          </Card>
-          <Card eyebrow="Total XP" title={`${xp.xp.toLocaleString()} XP`}>
-            <p className="text-sm text-ink-500">Level {xp.level} · {xp.xpToNextLevel} to next</p>
-          </Card>
+      <div className="app-card flex items-center gap-3 !p-3">
+        <Search className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--text-muted)" }} />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search sessions by language…"
+          className="w-full bg-transparent text-[13px] focus:outline-none"
+          style={{ color: "var(--text-primary)" }}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="workspace-tabs">
+          {SOURCE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              className={cn("workspace-tab", sourceFilter === opt.id && "workspace-tab--active")}
+              onClick={() => setSourceFilter(opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="workspace-tabs">
+          {TIME_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              className={cn("workspace-tab", timeFilter === opt.id && "workspace-tab--active")}
+              onClick={() => setTimeFilter(opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="today-section">
+        <div className="today-section-header">
+          <span className="today-section-title">All sessions</span>
+          <span className="today-section-eyebrow">{groups.length} shown</span>
         </div>
 
-        <Card
-          title="All sessions"
-          eyebrow={isLoading ? "loading…" : `${sessions.length} total`}
-          className="lg:col-span-2"
-        >
-          {isLoading ? (
-            <p className="font-mono text-sm text-ink-500">$ loading…</p>
-          ) : sessions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="font-mono text-sm text-ink-500">No sessions yet.</p>
-              <p className="mt-1 text-xs text-ink-500">Log your first session to get started.</p>
-            </div>
-          ) : (
-            <SessionHistory sessions={sessions} onDelete={handleDeleteGroup} />
-          )}
-        </Card>
+        {groups.length === 0 ? (
+          <div className="quiet-empty">
+            <Clock className="quiet-empty-icon" />
+            <p className="quiet-empty-title">No sessions match these filters</p>
+            <p className="quiet-empty-sub">Try a different search term or widen the time range.</p>
+          </div>
+        ) : (
+          <div>
+            {groups.map((g) => (
+              <SessionRow
+                key={g.id}
+                group={g}
+                onEdit={badgeLabel(g) === "Manual" ? setEditingGroup : undefined}
+                onDelete={badgeLabel(g) === "Manual" ? handleDeleteGroup : undefined}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {editingGroup && (
+        <EditSessionModal
+          key={editingGroup.sessionIds.join(",")}
+          open={!!editingGroup}
+          onClose={() => setEditingGroup(null)}
+          sessions={editingSessions}
+          onSave={handleSaveEdit}
+        />
+      )}
     </div>
   );
 }

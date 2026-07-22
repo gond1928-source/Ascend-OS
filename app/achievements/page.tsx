@@ -114,8 +114,8 @@ export default function AchievementsPage() {
                     <div
                       className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
                       style={{
-                        backgroundColor: a.unlocked ? `${accent}20` : "rgba(255,255,255,0.04)",
-                        color: a.unlocked ? accent : "#717a92",
+                        backgroundColor: a.unlocked ? `${accent}20` : "rgba(255,255,255,0.05)",
+                        color: a.unlocked ? accent : "#838383",
                       }}
                     >
                       {a.unlocked ? (ICONS[a.icon] ?? ICONS.sparkles) : <Lock className="h-3.5 w-3.5" />}

@@ -46,7 +46,7 @@ export function LanguageBreakdownChart({ data }: LanguageBreakdownChartProps) {
               width={88}
             />
             <Tooltip
-              contentStyle={{ background: "#141923", border: "1px solid #1b2230", borderRadius: 8, fontSize: 12 }}
+              contentStyle={{ background: "#1c1c1c", border: "1px solid #282828", borderRadius: 8, fontSize: 12 }}
               formatter={(value: number) => formatMinutes(value)}
             />
             <Bar dataKey="Coding" stackId="a" fill={CODING_COLOR} radius={[4, 4, 4, 4]} barSize={14} />

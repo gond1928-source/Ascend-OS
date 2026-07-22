@@ -209,7 +209,17 @@ export interface CommitDecision {
 
 export function evaluateGroupForCommit(
   group: Pick<GroupTotal, "totalMs">,
-  alreadyCommittedMs: number
+  alreadyCommittedMs: number,
+  /**
+   * Overrides the minimum-duration floor for this evaluation only, in ms.
+   * Defaults to MIN_GROUP_DURATION_MS (60s) — the coding/watching session
+   * path never passes this, so its floor stays exactly as before. Added so
+   * NativeTracker's distraction-side commit path can drive the floor from
+   * settings.capabilities.distractionFloorMinutes (see native-tracker.ts's
+   * commitOtherSegments) without a second floor-decision implementation
+   * anywhere — this function is still the ONE place that decides.
+   */
+  floorMs: number = MIN_GROUP_DURATION_MS,
 ): CommitDecision | null {
   const deltaMs = group.totalMs - alreadyCommittedMs;
 
@@ -225,7 +235,7 @@ export function evaluateGroupForCommit(
   // string of real 20-30s bursts — each individually under the floor —
   // accumulate into one real session instead of each being judged against
   // the floor in isolation and discarded forever.
-  if (group.totalMs < MIN_GROUP_DURATION_MS) return null;
+  if (group.totalMs < floorMs) return null;
 
   const deltaMinutes = Math.round(deltaMs / 60_000);
   if (deltaMinutes < 1) return null;

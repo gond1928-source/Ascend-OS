@@ -19,12 +19,7 @@ function todaySessions(sessions: Session[]): Session[] {
 export function getDailyQuests(sessions: Session[]): Quest[] {
   const today = todaySessions(sessions);
   const todayCodingMinutes = today.filter((s) => s.kind === "coding").reduce((s, x) => s + x.durationMinutes, 0);
-  const todayWatchingMinutes = today.filter((s) => s.kind === "watching").reduce((s, x) => s + x.durationMinutes, 0);
   const todaySessions3 = today.length;
-
-  // Languages used today vs languages ever used before today
-  const prevLanguages = new Set(sessions.filter((s) => s.startedAt.slice(0, 10) !== new Date().toISOString().slice(0, 10)).map((s) => s.language));
-  const newLangToday = today.some((s) => !prevLanguages.has(s.language));
 
   return [
     {
@@ -53,15 +48,6 @@ export function getDailyQuests(sessions: Session[]): Quest[] {
       progress: Math.min(1, todaySessions3 / 3),
       completed: todaySessions3 >= 3,
       icon: "layers",
-    },
-    {
-      id: "new_language",
-      title: "Try Something New",
-      description: "Log a session in a language you haven't used before.",
-      xpReward: QUEST_XP.new_language,
-      progress: newLangToday ? 1 : 0,
-      completed: newLangToday,
-      icon: "globe",
     },
   ];
 }

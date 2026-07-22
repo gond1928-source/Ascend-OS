@@ -1,0 +1,204 @@
+/**
+ * document-viewer.css — typography for the shared Document Viewer.
+ *
+ * This is the one place "reading surface" styling lives, shared by report
+ * sections and study note/reference content, so the two never drift into
+ * two different looking documents.
+ */
+
+.doc-prose {
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+.doc-h1 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+}
+
+.doc-h2 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 36px 0 12px;
+  padding-top: 4px;
+}
+
+.doc-prose > section:first-child .doc-h2 {
+  margin-top: 0;
+}
+
+.doc-h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 20px 0 8px;
+}
+
+.doc-p {
+  margin: 0 0 14px;
+}
+
+.doc-lead {
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--text-primary);
+}
+
+.doc-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 4px 0 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.doc-stat-row b {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.doc-inline-figure {
+  margin: 16px 0 22px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-panel) 60%, transparent);
+}
+
+.doc-chip {
+  border-radius: var(--radius-full);
+  background: var(--surface-elevated);
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.doc-ul,
+.doc-ol {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.doc-ul li,
+.doc-ol li {
+  margin-bottom: 6px;
+}
+
+.doc-blockquote {
+  margin: 0 0 14px;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--accent-primary);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.doc-pre {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.doc-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-elevated);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.doc-link {
+  color: var(--accent-info);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── File attachment row (design brief §11, Linear reference) ──────────────
+   Icon + filename + size, left-to-right, clickable, no thumbnail. Shared by
+   FileAttachmentRow — reused for PDF/link study items today, Project
+   resources and Activity attachments in a later phase. Functional icon
+   only (no tinted circle badge, per §5/§9). */
+.file-attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.file-attachment-row:hover {
+  background: var(--surface-elevated);
+}
+
+.file-attachment-row-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.file-attachment-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.file-attachment-row-meta {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.file-attachment-row-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.doc-editor-textarea {
+  resize: vertical;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.doc-editor-textarea:focus {
+  outline: none;
+  border-color: var(--border-accent);
+}

@@ -164,6 +164,46 @@ const BROWSER_APPS: string[] = [
   "chromium",
 ];
 
+/**
+ * Browser window titles conventionally end with " - <Browser Name>"
+ * (e.g. "Claude - Google Chrome", "ChatGPT - Google Chrome"). This is the
+ * suffix stripped off by extractBrowserSiteLabel() to recover just the page
+ * title. Kept separate from BROWSER_TITLE_SIGNATURES above, which mixes in
+ * non-browser-name content signals (e.g. "udemy", "coursera") that must NOT
+ * be treated as a suffix to strip.
+ */
+const BROWSER_NAME_SUFFIXES: string[] = [
+  "google chrome", "chrome",
+  "mozilla firefox", "firefox",
+  "microsoft edge", "edge",
+  "brave browser", "brave",
+  "opera", "vivaldi", "chromium", "safari", "arc",
+];
+
+/**
+ * Hostname → friendly display name, for the (preferred, but often
+ * unavailable) case where WindowSnapshot.url is populated. Only the sites
+ * relevant to distraction tracking need an entry here; anything else falls
+ * back to a prettified hostname (see prettifyHostname()).
+ */
+const KNOWN_SITE_LABELS: Record<string, string> = {
+  "claude.ai": "Claude",
+  "chatgpt.com": "ChatGPT",
+  "chat.openai.com": "ChatGPT",
+  "openai.com": "ChatGPT",
+  "reddit.com": "Reddit",
+  "youtube.com": "YouTube",
+  "twitter.com": "X",
+  "x.com": "X",
+  "facebook.com": "Facebook",
+  "instagram.com": "Instagram",
+  "tiktok.com": "TikTok",
+  "netflix.com": "Netflix",
+  "twitch.tv": "Twitch",
+  "github.com": "GitHub",
+  "linkedin.com": "LinkedIn",
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Learning detection — title keywords only, case-insensitive
 // ─────────────────────────────────────────────────────────────────────────────
@@ -303,6 +343,62 @@ function isNonCodingIdeState(title: string): string | null {
     }
   }
   return null;
+}
+
+/** Turns "some-cool-site.com" into "Some Cool Site" as a last-resort label. */
+function prettifyHostname(hostname: string): string {
+  const base = hostname.split(".").slice(0, -1).join(".") || hostname;
+  return base
+    .split(/[-.]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+/**
+ * Derives a site-level label for a browser window — e.g. "Claude" vs
+ * "ChatGPT" — as distinct from the OS-reported process name, which is just
+ * "Chrome"/"Google Chrome" for every tab regardless of which site is open.
+ *
+ * Preference order:
+ *   1. The tab URL's hostname (most reliable, when the OS/browser exposes
+ *      it — not all platforms do).
+ *   2. The window title, with the trailing " - <Browser Name>" suffix
+ *      stripped off. Nearly every desktop browser sets its window title to
+ *      "<page title> - <Browser Name>", so what remains is normally exactly
+ *      the site's own page title (e.g. "Claude", "ChatGPT").
+ *
+ * Returns null only if neither signal yields anything usable.
+ */
+export function extractBrowserSiteLabel(title: string, url?: string): string | null {
+  if (url) {
+    try {
+      const hostname = new URL(url).hostname.replace(/^www\./i, "").toLowerCase();
+      if (hostname) {
+        return KNOWN_SITE_LABELS[hostname] ?? prettifyHostname(hostname);
+      }
+    } catch {
+      // Not a parseable URL — fall through to title parsing.
+    }
+  }
+
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) return null;
+
+  let pageTitle = trimmedTitle;
+  const lowerTitle = trimmedTitle.toLowerCase();
+  for (const suffix of BROWSER_NAME_SUFFIXES) {
+    // Match a trailing " - <suffix>" (allow either hyphen or en/em dash as
+    // the separator, since browsers are inconsistent about which they use).
+    const pattern = new RegExp("[\\s]+[-–—][\\s]+" + suffix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i");
+    const match = lowerTitle.match(pattern);
+    if (match) {
+      pageTitle = trimmedTitle.slice(0, match.index).trim();
+      break;
+    }
+  }
+
+  return pageTitle.length > 0 ? pageTitle : null;
 }
 
 /** Returns the first matched entertainment keyword, or null. */
@@ -454,6 +550,13 @@ export function classifySnapshot(snapshot: WindowSnapshot): ClassifiedSnapshot {
   const isBrowser = BROWSER_APPS.some((b) => appLower.includes(b));
 
   if (isBrowser) {
+    // Site-level label (e.g. "Claude" vs "ChatGPT"), distinct from appName
+    // which is just "Chrome" for every tab. Attached to every branch below
+    // so the segmenter can group/label browser activity by site rather than
+    // by browser process — see ClassifiedSnapshot.siteLabel and
+    // segmenter.ts's primaryApp computation.
+    const siteLabel = extractBrowserSiteLabel(snapshot.windowTitle ?? "", snapshot.url) ?? undefined;
+
     // 3a. Entertainment keyword — checked first, always wins
     const entKw = matchEntertainmentKeyword(title);
     if (entKw) {
@@ -461,6 +564,7 @@ export function classifySnapshot(snapshot: WindowSnapshot): ClassifiedSnapshot {
         ...snapshot,
         category: "entertainment",
         classificationReason: `matched: ${entKw}`,
+        siteLabel,
       };
     }
 
@@ -475,6 +579,7 @@ export function classifySnapshot(snapshot: WindowSnapshot): ClassifiedSnapshot {
         classificationReason: watchingLanguage
           ? `matched: ${learnMatches.slice(0, 2).join(" + ")} (language: ${watchingLanguage})`
           : `matched: ${learnMatches.slice(0, 2).join(" + ")} (no specific language detected)`,
+        siteLabel,
       };
     }
 
@@ -482,6 +587,7 @@ export function classifySnapshot(snapshot: WindowSnapshot): ClassifiedSnapshot {
       ...snapshot,
       category: "other",
       classificationReason: "Browser open — no tutorial/programming keywords in title",
+      siteLabel,
     };
   }
 

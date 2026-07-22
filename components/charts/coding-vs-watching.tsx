@@ -36,8 +36,8 @@ export function CodingVsWatching({ codingMinutes, watchingMinutes }: CodingVsWat
             </Pie>
             <Tooltip
               contentStyle={{
-                background: "#141923",
-                border: "1px solid #1b2230",
+                background: "#1c1c1c",
+                border: "1px solid #282828",
                 borderRadius: 8,
                 fontSize: 12,
               }}

@@ -62,9 +62,17 @@ import {
 } from "./types";
 import { classifySnapshot } from "./classifier";
 import { buildSegments } from "./segmenter";
-import { groupSegmentsByKindLanguage, evaluateGroupForCommit } from "./session-builder";
+import { groupSegmentsByKindLanguage, evaluateGroupForCommit, MIN_GROUP_DURATION_MS } from "./session-builder";
+import { groupOtherSegments } from "./distraction-builder";
 import { SessionDraft, SessionSource } from "@/types/session";
+import { DistractionDraft, DistractionSource } from "@/types/distraction";
 import { getWindowSnapshot } from "@/lib/tauri/tracker";
+import { loadSettingsSync } from "@/lib/storage/settings-store";
+import { loadAppRulesSync } from "@/lib/storage/app-rules-store";
+import { applyAppRules } from "@/lib/app-rules";
+import { isSelfSnapshot } from "@/constants/self-identity";
+import { recordDetection } from "@/lib/detected-apps";
+import { loadDetectedAppsSync, saveDetectedAppsSync } from "@/lib/storage/detected-apps-store";
 
 export type TrackerStatus = "stopped" | "running" | "error";
 
@@ -75,6 +83,7 @@ export interface TrackerState {
   segmentsToday: ActivitySegment[];
   lastPollAt: number | null;
   pendingSessions: SessionDraft[];
+  pendingDistractions: DistractionDraft[];
   committedCount: number;
 
   // ── Rich live state for UI display ──────────────────────────────────────────
@@ -103,6 +112,7 @@ const INITIAL_STATE: TrackerState = {
   segmentsToday: [],
   lastPollAt: null,
   pendingSessions: [],
+  pendingDistractions: [],
   committedCount: 0,
   currentMode: null,
   currentApp: null,
@@ -131,6 +141,11 @@ export class NativeTracker {
    * whether it had actually been persisted yet.
    */
   private committedMsByGroup: Map<string, number> = new Map();
+
+  /** Same running-total commit model as committedMsByGroup, but for
+   * "Others" (distraction) segments, keyed by their app/window label
+   * instead of (kind, language). See distraction-builder.ts. */
+  private committedDistractionMsByLabel: Map<string, number> = new Map();
 
   /**
    * The run identity stamped onto every draft committed during the current
@@ -201,6 +216,7 @@ export class NativeTracker {
     this.snapshots = [];
     this.currentRunId = null;
     this.committedMsByGroup.clear();
+    this.committedDistractionMsByLabel.clear();
     return flushed;
   }
 
@@ -212,6 +228,14 @@ export class NativeTracker {
   flushSessions(): SessionDraft[] {
     const pending = [...this.state.pendingSessions];
     this.state = { ...this.state, pendingSessions: [] };
+    this.emit();
+    return pending;
+  }
+
+  /** Distraction-side equivalent of flushSessions(). */
+  flushDistractions(): DistractionDraft[] {
+    const pending = [...this.state.pendingDistractions];
+    this.state = { ...this.state, pendingDistractions: [] };
     this.emit();
     return pending;
   }
@@ -234,9 +258,25 @@ export class NativeTracker {
   private forceFlush(): SessionDraft[] {
     const segments = buildSegments(this.snapshots, this.config);
     this.commitClosedSegments(segments); // include the still-open segment too — it's being force-closed right now
+    this.commitOtherSegments(segments, this.readDistractionFloorMs());
     const pending = [...this.state.pendingSessions];
     this.state = { ...this.state, pendingSessions: [] };
     return pending;
+  }
+
+  /**
+   * Reads settings.capabilities.distractionFloorMinutes fresh (synchronous
+   * localStorage read, same seam session-store.ts's sync helpers use for
+   * the page-unload path) and converts it to ms for evaluateGroupForCommit.
+   * Read on every call rather than cached at construction time, so editing
+   * this in Settings mid-session takes effect on the very next poll/flush
+   * without restarting monitoring. Falls back to the unchanged
+   * MIN_GROUP_DURATION_MS default if the setting is missing/invalid.
+   */
+  private readDistractionFloorMs(): number {
+    const minutes = loadSettingsSync().capabilities.distractionFloorMinutes;
+    if (!Number.isFinite(minutes) || minutes <= 0) return MIN_GROUP_DURATION_MS;
+    return minutes * 60_000;
   }
 
   /**
@@ -289,6 +329,42 @@ export class NativeTracker {
     return this.committedMsByGroup.size;
   }
 
+  /**
+   * Distraction-side equivalent of commitClosedSegments(), for "other"
+   * category segments. Uses the exact same evaluateGroupForCommit floor
+   * policy (via groupOtherSegments — see distraction-builder.ts), keyed by
+   * app/window label instead of (kind, language), and its own running-total
+   * map so distraction commits never interact with the coding/watching one.
+   */
+  private commitOtherSegments(segments: ActivitySegment[], floorMs: number = MIN_GROUP_DURATION_MS): void {
+    if (segments.length === 0) return;
+
+    const groups = groupOtherSegments(segments);
+    const newDrafts: DistractionDraft[] = [];
+
+    for (const group of groups) {
+      const alreadyCommittedMs = this.committedDistractionMsByLabel.get(group.label) ?? 0;
+      const decision = evaluateGroupForCommit(group, alreadyCommittedMs, floorMs);
+      if (!decision) continue;
+
+      newDrafts.push({
+        label: group.label,
+        durationMinutes: decision.deltaMinutes,
+        source: "native" as DistractionSource,
+        runId: this.currentRunId ?? undefined,
+      });
+
+      this.committedDistractionMsByLabel.set(group.label, decision.newCommittedMs);
+    }
+
+    if (newDrafts.length === 0) return;
+
+    this.state = {
+      ...this.state,
+      pendingDistractions: [...this.state.pendingDistractions, ...newDrafts],
+    };
+  }
+
   private async poll(): Promise<void> {
     try {
       const snapshot = await getWindowSnapshot();
@@ -297,7 +373,52 @@ export class NativeTracker {
         throw new Error("get_window_snapshot unavailable (not running inside Tauri)");
       }
 
-      const classified = classifySnapshot(snapshot);
+      // ── Self-exclusion (hard, not configurable) ──────────────────────────
+      // Ascend OS must never track or classify itself — see
+      // constants/self-identity.ts. This never reaches classifySnapshot()
+      // or applyAppRules() at all; a synthetic "idle" snapshot is pushed
+      // instead of simply skipping the poll. Skipping entirely would leave
+      // a silent timestamp gap that buildSegments() would otherwise absorb
+      // into whichever real segment was open right before/after (e.g.
+      // checking App Rules for 20s mid coding-session would silently
+      // inflate that coding segment's duration across the gap it never
+      // actually covered). Pushing an idle snapshot instead correctly
+      // closes/bounds whatever segment was open, exactly like a real idle
+      // snapshot already does — no new segmenter special-case needed.
+      const classified = isSelfSnapshot(snapshot)
+        ? {
+            ...snapshot,
+            category: "idle" as const,
+            classificationReason: "Ascend OS itself — hard-excluded from tracking, see constants/self-identity.ts",
+            isActivelyCoding: false,
+          }
+        : applyAppRules(classifySnapshot(snapshot), loadAppRulesSync());
+      // classifySnapshot() runs exactly as it always has — untouched. The
+      // app-rules override pass above is a THIN layer applied strictly
+      // AFTER classification (see lib/app-rules.ts's header): it never
+      // changes what the classifier itself decides, only what NativeTracker
+      // does with that decision for apps a person has configured a rule
+      // for. Rules are read fresh every poll (synchronous localStorage
+      // read, same seam as settings below) so editing a rule mid-session —
+      // e.g. flipping "Tracking" off for an app — takes effect on the very
+      // next poll.
+
+      // ── Detected-apps registry (App Rules panel) ─────────────────────────
+      // Records "the tracker genuinely classified this app" — never for
+      // idle (includes the self-exclusion snapshot above, which is always
+      // idle) and never for an app a person has set Tracking: Off for
+      // (applyAppRules already forced THAT snapshot's category to idle too,
+      // so the same `!== "idle"` check naturally excludes it — no separate
+      // special-case needed, same philosophy as Phase 1's tracking-off
+      // handling). See lib/detected-apps.ts / types/detected-app.ts.
+      if (classified.category !== "idle") {
+        const key = classified.siteLabel ?? classified.appName;
+        const existingDetections = loadDetectedAppsSync();
+        const updatedDetections = recordDetection(existingDetections, key, classified.category);
+        if (updatedDetections !== existingDetections) {
+          saveDetectedAppsSync(updatedDetections);
+        }
+      }
 
       // Prune snapshots older than today
       const todayStart = new Date();
@@ -306,12 +427,14 @@ export class NativeTracker {
       this.snapshots.push(classified);
 
       const segments = buildSegments(this.snapshots, this.config);
+      const distractionFloorMs = this.readDistractionFloorMs();
 
       // Only ever commit from CLOSED segments (everything but the still-open
       // last one). The open segment's duration keeps growing every poll, so
       // counting it early would double-count once it eventually closes —
       // committing from it is only safe once it's actually closed.
       this.commitClosedSegments(segments.slice(0, -1));
+      this.commitOtherSegments(segments.slice(0, -1), distractionFloorMs);
 
       // ── Compute live display state ─────────────────────────────────────────
       const lastSegment = segments[segments.length - 1] ?? null;

@@ -4,13 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { TrackerState, TrackerStatus } from "@/lib/tracker/native-tracker";
 import { ClassifiedSnapshot } from "@/lib/tracker/types";
 import { SessionDraft } from "@/types/session";
-import { persistDraftsDirectly } from "@/lib/tracker/storage";
+import { DistractionDraft } from "@/types/distraction";
+import { persistDraftsDirectly, persistDistractionDraftsDirectly } from "@/lib/tracker/storage";
 
 export interface UseNativeTrackerResult {
   status: TrackerStatus;
   error: string | null;
   currentSnapshot: ClassifiedSnapshot | null;
   pendingSessionCount: number;
+  pendingDistractionCount: number;
   lastPollAt: Date | null;
   isRunning: boolean;
   start: () => void;
@@ -53,6 +55,7 @@ export interface UseNativeTrackerResult {
  */
 export function useNativeTracker(
   onSessionsCommitted: (drafts: SessionDraft[]) => void,
+  onDistractionsCommitted?: (drafts: DistractionDraft[]) => void,
 ): UseNativeTrackerResult {
   const [state, setState] = useState<TrackerState | null>(null);
   const trackerRef = useRef<import("@/lib/tracker/native-tracker").NativeTracker | null>(null);
@@ -61,6 +64,9 @@ export function useNativeTracker(
   // a stale callback, without needing to re-run the setup effect.
   const onSessionsRef = useRef(onSessionsCommitted);
   onSessionsRef.current = onSessionsCommitted;
+
+  const onDistractionsRef = useRef(onDistractionsCommitted);
+  onDistractionsRef.current = onDistractionsCommitted;
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +85,8 @@ export function useNativeTracker(
     const handlePageHide = () => {
       const drafts = trackerRef.current?.flushPendingSessions() ?? [];
       if (drafts.length > 0) persistDraftsDirectly(drafts);
+      const distractionDrafts = trackerRef.current?.flushDistractions() ?? [];
+      if (distractionDrafts.length > 0) persistDistractionDraftsDirectly(distractionDrafts);
     };
     window.addEventListener("pagehide", handlePageHide);
     window.addEventListener("beforeunload", handlePageHide);
@@ -98,6 +106,8 @@ export function useNativeTracker(
       // session for no reason.
       const drafts = trackerRef.current?.flushSessions() ?? [];
       if (drafts.length > 0) onSessionsRef.current(drafts);
+      const distractionDrafts = trackerRef.current?.flushDistractions() ?? [];
+      if (distractionDrafts.length > 0) onDistractionsRef.current?.(distractionDrafts);
     };
   }, []);
 
@@ -129,12 +139,19 @@ export function useNativeTracker(
       // Also fire the callback so UI (XP, achievements, etc.) updates immediately
       onSessionsRef.current(drafts);
     }
+    const distractionDrafts = trackerRef.current?.flushDistractions() ?? [];
+    if (distractionDrafts.length > 0) {
+      persistDistractionDraftsDirectly(distractionDrafts);
+      onDistractionsRef.current?.(distractionDrafts);
+    }
     return drafts;
   }, []);
 
   const flushPendingSessions = useCallback((): SessionDraft[] => {
     const drafts = trackerRef.current?.flushPendingSessions() ?? [];
     if (drafts.length > 0) onSessionsRef.current(drafts);
+    const distractionDrafts = trackerRef.current?.flushDistractions() ?? [];
+    if (distractionDrafts.length > 0) onDistractionsRef.current?.(distractionDrafts);
     return drafts;
   }, []);
 
@@ -143,6 +160,7 @@ export function useNativeTracker(
     error: state?.error ?? null,
     currentSnapshot: state?.currentSnapshot ?? null,
     pendingSessionCount: state?.pendingSessions.length ?? 0,
+    pendingDistractionCount: state?.pendingDistractions.length ?? 0,
     lastPollAt: state?.lastPollAt ? new Date(state.lastPollAt) : null,
     isRunning: state?.status === "running",
     start,

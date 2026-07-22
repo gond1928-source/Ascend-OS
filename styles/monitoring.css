@@ -1,0 +1,123 @@
+/**
+ * monitoring.css — Focus page + Session History page.
+ *
+ * Deliberately small. The redesign's whole point is to stop looking like
+ * a separate settings-style prototype and start looking like the rest of
+ * Ascend OS — so almost every visual piece here reuses today-view.css
+ * classes already established on Home (.today-section, .timeline-row,
+ * .workspace-row-tag, .quick-action-btn, .workspace-tabs/.workspace-tab,
+ * .quiet-empty, .today-link) rather than inventing page-specific ones.
+ * What's below is only the handful of things that genuinely didn't exist
+ * yet: the collapsible Advanced section, and the native-tracker's
+ * inline signal/warning rows (kept from the old page, restyled onto the
+ * token system instead of the old ink-*/base-* utility classes).
+ */
+
+/* ── Advanced (collapsible) ─────────────────────────────────────────────── */
+
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.advanced-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.advanced-toggle-chevron {
+  width: 12px;
+  height: 12px;
+  transition: transform var(--transition-base);
+}
+
+.advanced-toggle-chevron--open {
+  transform: rotate(90deg);
+}
+
+.advanced-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--transition-slow);
+}
+
+.advanced-content--open {
+  grid-template-rows: 1fr;
+}
+
+.advanced-content-inner {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .advanced-content {
+    transition: none !important;
+  }
+  .advanced-toggle-chevron {
+    transition: none !important;
+  }
+}
+
+/* ── Native tracker live detail (restyled from the old page) ────────────── */
+
+.tracker-live {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+}
+
+.tracker-signal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.tracker-signal-label {
+  width: 112px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.tracker-signal-value {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tracker-inline-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.tracker-inline-note-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tracker-inline-note-icon--warning { color: var(--status-distraction); }
+.tracker-inline-note-icon--error { color: var(--status-error); }

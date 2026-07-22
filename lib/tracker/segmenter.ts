@@ -40,6 +40,16 @@ export function buildSegments(
   let distractionSwitches = 0;
   // Track the last "committed" category to detect real switches
   let committedCategory = snapshots[0].category;
+  // Track the last "committed" primary key (site label for browser windows,
+  // else appName) alongside category. A category switch isn't the only thing
+  // that should close a segment: two different sites within the SAME
+  // category (e.g. Claude.ai then ChatGPT, both "other") are two different
+  // distraction sources and must become two different segments — otherwise
+  // flushSegment's majority-vote primaryApp picks exactly one label for the
+  // whole merged stretch and the other site's time silently vanishes from
+  // the "Top distractions" breakdown, even though distraction-builder groups
+  // correctly by primaryApp per segment. See primaryKeyOf() below.
+  let committedPrimaryKey = primaryKeyOf(snapshots[0]);
   // Consecutive idle-coding snapshots (no keyboard in IDE)
   let codingIdleStreak = 0;
   const codingIdleStreakMax = Math.ceil(config.codingIdleThresholdMs / config.pollIntervalMs);
@@ -69,6 +79,7 @@ export function buildSegments(
       if (seg) segments.push(seg);
       buffer = [curr];
       committedCategory = curr.category;
+      committedPrimaryKey = primaryKeyOf(curr);
       interruptionCount = 0;
       distractionSwitches = 0;
       codingIdleStreak = 0;
@@ -95,6 +106,7 @@ export function buildSegments(
         // Start new segment from current (which may be idle/other)
         buffer = [curr];
         committedCategory = curr.category;
+        committedPrimaryKey = primaryKeyOf(curr);
         interruptionCount = 0;
         distractionSwitches = 0;
         codingIdleStreak = 0;
@@ -123,6 +135,7 @@ export function buildSegments(
         if (seg) segments.push(seg);
         buffer = [curr];
         committedCategory = curr.category;
+        committedPrimaryKey = primaryKeyOf(curr);
         interruptionCount = 0;
         distractionSwitches = 0;
         learningIdleStreak = 0;
@@ -132,14 +145,25 @@ export function buildSegments(
       }
     }
 
-    // ── Category switch detection ─────────────────────────────────────────────
-    // We count consecutive polls in the new category to distinguish a transient
-    // one-poll blip (notification, quick alt-tab) from a real sustained switch.
-    // A single poll gap is always ~pollIntervalMs, so comparing a time delta to
-    // shortInterruptionMs would always evaluate true and swallow every transition.
+    // ── Category / site switch detection ──────────────────────────────────────
+    // We count consecutive polls in the new category/site to distinguish a
+    // transient one-poll blip (notification, quick alt-tab) from a real
+    // sustained switch. A single poll gap is always ~pollIntervalMs, so
+    // comparing a time delta to shortInterruptionMs would always evaluate
+    // true and swallow every transition.
+    //
+    // A "boundary" is either a category change OR — within the SAME
+    // category — a change in primary key (site label for browsers, else
+    // appName). The latter is what distinguishes Claude.ai from ChatGPT: both
+    // classify as "other", so category alone never changes between them, but
+    // they are still two different distraction sources and must become two
+    // different segments (see committedPrimaryKey above).
+    const currPrimaryKey = primaryKeyOf(curr);
     const categoryChanged = curr.category !== committedCategory;
+    const siteChanged = !categoryChanged && currPrimaryKey !== committedPrimaryKey;
+    const boundaryChanged = categoryChanged || siteChanged;
 
-    if (categoryChanged) {
+    if (boundaryChanged) {
       offCategoryStreak++;
 
       if (offCategoryStreak <= shortInterruptionStreakMax) {
@@ -176,13 +200,14 @@ export function buildSegments(
       if (seg) segments.push(seg);
       buffer = [...carriedOverSnapshots, curr];
       committedCategory = curr.category;
+      committedPrimaryKey = currPrimaryKey;
       interruptionCount++;
       distractionSwitches = 0;
       codingIdleStreak = 0;
       learningIdleStreak = 0;
       offCategoryStreak = 0;
     } else {
-      // Back on the committed category — reset the off-category streak
+      // Back on the committed category AND site — reset the off-boundary streak
       offCategoryStreak = 0;
       buffer.push(curr);
     }
@@ -193,6 +218,18 @@ export function buildSegments(
   if (last) segments.push(last);
 
   return segments;
+}
+
+/**
+ * The grouping key for a single snapshot: siteLabel when the snapshot is
+ * from a browser window (see classifier.ts's extractBrowserSiteLabel), else
+ * the OS-reported appName. Shared by both segment-boundary detection (so
+ * Claude.ai and ChatGPT split into separate segments) and flushSegment's
+ * primaryApp majority vote (so each segment is labeled correctly) — kept as
+ * one function so the two can never drift apart.
+ */
+function primaryKeyOf(s: ClassifiedSnapshot): string {
+  return s.siteLabel ?? s.appName;
 }
 
 function computeMetadata(
@@ -260,8 +297,20 @@ function flushSegment(
     : undefined;
 
   // Primary app
+  //
+  // For browser windows, s.appName is just the browser process name
+  // ("Chrome", "Google Chrome", ...) — identical no matter which site is
+  // open, so majority-voting on it alone collapses distinct distraction
+  // sources (e.g. Claude.ai and ChatGPT) into one bucket. classifySnapshot
+  // attaches siteLabel for browser windows (derived from the tab URL or
+  // page title — see extractBrowserSiteLabel in classifier.ts), so prefer
+  // that per-snapshot when present and only fall back to appName for
+  // non-browser windows where appName is already a meaningful, distinct label.
   const appCounts = new Map<string, number>();
-  for (const s of snapshots) appCounts.set(s.appName, (appCounts.get(s.appName) ?? 0) + 1);
+  for (const s of snapshots) {
+    const key = primaryKeyOf(s);
+    appCounts.set(key, (appCounts.get(key) ?? 0) + 1);
+  }
   const primaryApp = [...appCounts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 
   const metadata = computeMetadata(snapshots, interruptionCount, distractionSwitches);

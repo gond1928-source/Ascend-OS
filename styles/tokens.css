@@ -1,91 +1,116 @@
 /*
  * tokens.css — Semantic design tokens for Ascend OS
  *
+ * Rewritten for the Ascend OS identity reset (see design brief).
+ * Three-tier color system:
+ *   Tier 1 — Surfaces & chrome: grayscale, always.
+ *   Tier 2 — Status/functional signal: ONE accent (violet), used sparingly.
+ *   Tier 3 — Data visualization only: category colors (--status-*).
+ *
  * Rules:
  *  1. Components reference ONLY these tokens, never raw hex values.
  *  2. Themes override these variables in their own file.
  *  3. Add new semantic slots here before using them in components.
+ *  4. Tier-1 surfaces must stay neutral grayscale — no hue tint from the
+ *     accent color. Depth comes from layering shades, not color.
  *
  * Slot taxonomy:
  *  --surface-*       Background layers (app shell, panels, cards)
  *  --text-*          Foreground / typography
- *  --accent-*        Interactive / highlight colors
- *  --border-*        Dividers and outlines
- *  --shadow-*        Elevation
- *  --blur-*          Backdrop-filter values
- *  --radius-*        Border radius scale
+ *  --accent-*        The single interactive/highlight color (violet)
+ *  --status-*        Tier 3 — activity/data-viz category colors ONLY
+ *  --border-*        Dividers and outlines (hairlines by default)
+ *  --shadow-*        Elevation (kept minimal — no glow)
+ *  --radius-*        Border radius scale (small — this is not a card UI)
  *  --spacing-*       Layout spacing scale
- *  --transition-*    Motion / easing
- *  --font-*          Typography
+ *  --transition-*    Motion / easing (fast, purposeful only)
+ *  --font-*          Typography — one family, weight/size carries hierarchy
  */
 
 :root {
-  /* ── Surfaces ────────────────────────────────────────────────────── */
-  --surface-app:        #0a0d12;   /* outermost shell background        */
-  --surface-sidebar:    #0e1218;   /* sidebar background                */
-  --surface-panel:      #141923;   /* cards, panels, modals             */
-  --surface-elevated:   #1b2230;   /* hovered/active cards              */
-  --surface-overlay:    #262f42;   /* dropdowns, tooltips               */
+  /* ── Tier 1 — Surfaces (grayscale, layered dark) ───────────────────────
+   * PURE NEUTRAL (R=G=B) — confirmed against Linear's real dark theme via
+   * live devtools inspection (lch() computed values: hue ~272° but chroma
+   * ~0-3, i.e. functionally achromatic). An earlier "R≥G≥B warm bias"
+   * formula overshot into a visible gold/amber cast; going fully neutral
+   * (chroma 0) sidesteps that failure mode entirely — there's no hue left
+   * to be warm or cool. Depth comes from stacking these steps, not from
+   * borders or shadows.                                                  */
+  --surface-inset:      #0a0a0a;   /* recessed wells (inputs, code)      */
+  --surface-app:        #0a0a0a;   /* outermost shell background        */
+  --surface-sidebar:    #131313;   /* icon rail / nav sidebar            */
+  --surface-panel:      #1c1c1c;   /* central workspace panels           */
+  --surface-elevated:   #282828;   /* hovered rows, active list items    */
+  --surface-overlay:    #363636;   /* dropdowns, tooltips, popovers      */
 
-  /* ── Text ───────────────────────────────────────────────────────── */
-  --text-primary:       #f5f6fa;   /* headings, primary labels          */
-  --text-secondary:     #a7afc2;   /* sub-labels, descriptions          */
-  --text-muted:         #717a92;   /* disabled, placeholders            */
+  /* ── Text — pure neutral, soft off-white to muted gray ─────────────── */
+  --text-primary:       #f7f7f5;
+  --text-secondary:     #b5b4b0;
+  --text-muted:         #838383;   /* interpolated, not directly given — recheck against secondary once rendered */
 
-  /* ── Accents ────────────────────────────────────────────────────── */
-  --accent-primary:     #7c6cf6;   /* violet — main CTA, active states  */
-  --accent-success:     #3ddc97;   /* mint — positive / coding          */
-  --accent-warning:     #f5b94d;   /* amber — caution / learning        */
-  --accent-danger:      #f25f7a;   /* rose — errors / streaks broken    */
-  --accent-info:        #4dc8f5;   /* sky — info / watching             */
+  /* ── Tier 2 — Accent: ONE color, used sparingly ────────────────────────
+   * Active nav item, selected state, running-session indicator, primary
+   * CTA, progress fill. Never a background wash, glow, or gradient.     */
+  --accent-primary:     #7c6cf6;
+  --accent-primary-muted: rgba(124, 108, 246, 0.55);
 
-  /* ── Status (semantic activity/monitoring colors) ──────────────────
-   * PINNED GLOBALLY. Unlike --accent-*, these must NEVER be redefined
-   * inside a [data-theme="..."] block — that's exactly what caused
-   * status colors to drift when themes were introduced. Dark.css and
-   * Glass.css intentionally do not touch these; every theme inherits
-   * them unchanged straight from :root.
-   *
-   * Use these for genuine activity/monitoring meaning (CODING badges,
-   * typing-detected indicators, WATCHING/learning badges, status pills).
-   * Use --accent-* for general UI chrome, buttons, and atmosphere —
-   * those are allowed to shift per theme.
-   */
+  /* Aliases kept for config completeness (Tailwind's accent.success/
+   * warning/danger/info reference these) — not currently used by any
+   * component, but defined so the var() reference is never dangling. */
+  --accent-success:     var(--status-coding);
+  --accent-warning:     var(--status-distraction);
+  --accent-danger:      var(--feedback-danger);
+  --accent-info:        var(--status-learning);
+
+  /* Reserved for genuine non-activity UI feedback (e.g. a destructive
+   * confirm, a form validation state) — NOT for general chrome/atmosphere.
+   * Kept separate from --status-* below, which is for data/activity only. */
+  --feedback-danger:    #e5484d;
+
+  /* ── Tier 3 — Data visualization / activity category colors ───────────
+   * PINNED GLOBALLY. Never redefined inside a [data-theme="..."] block.
+   * Live ONLY inside charts and small inline indicators (a dot next to a
+   * timeline row, a bar in a chart) — never a panel background, border,
+   * or icon-badge fill.                                                 */
   --status-coding:      #3ddc97;   /* green — coding, typing detected   */
   --status-learning:    #4dc8f5;   /* blue — learning / watching        */
-  --status-warning:     #f5b94d;   /* amber — caution                   */
+  --status-distraction: #f5b94d;   /* amber — distraction / context-switch */
+  --status-warning:     #f5b94d;   /* alias, caution                    */
   --status-error:       #f25f7a;   /* rose — errors, streak broken      */
   --status-success:     #3ddc97;   /* alias of coding-green             */
-  --status-idle:        #717a92;   /* neutral gray — idle / other       */
+  --status-idle:        #838383;   /* neutral gray — idle / other       */
 
-  /* ── Borders ────────────────────────────────────────────────────── */
+  /* ── Borders — hairlines, not card outlines. Pure white overlay
+   * (chroma 0) — matches Linear's own achromatic hairline approach. */
   --border-subtle:      rgba(255,255,255,0.06);
   --border-default:     rgba(255,255,255,0.10);
-  --border-strong:      rgba(255,255,255,0.18);
-  --border-accent:      rgba(124,108,246,0.40);
+  --border-strong:      rgba(255,255,255,0.16);
+  --border-accent:      rgba(124,108,246,0.45);
 
-  /* ── Shadows ────────────────────────────────────────────────────── */
-  --shadow-sm:          0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md:          0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg:          0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow:        0 0 0 1px rgba(124,108,246,0.15),
-                        0 8px 30px -10px rgba(124,108,246,0.35);
+  /* ── Shadows — minimal, no glow ─────────────────────────────────────── */
+  --shadow-sm:          0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md:          0 2px 8px rgba(0,0,0,0.30);
+  --shadow-lg:          0 6px 20px rgba(0,0,0,0.35);
 
-  /* ── Blur ───────────────────────────────────────────────────────── */
+  /* ── Blur (panels/popovers only, not a stylistic default) ─────────── */
   --blur-none:          blur(0px);
   --blur-sm:            blur(4px);
   --blur-md:            blur(12px);
   --blur-lg:            blur(24px);
-  --blur-xl:            blur(48px);
 
-  /* ── Radius ─────────────────────────────────────────────────────── */
+  /* ── Radius — small. This is a workspace, not a card grid ──────────── */
+  --radius-xs:          4px;
   --radius-sm:          6px;
-  --radius-md:          10px;
-  --radius-lg:          16px;
-  --radius-xl:          20px;
+  --radius-md:          8px;
+  --radius-lg:          10px;
+  /* Kept as a compatibility alias for not-yet-restyled screens (Settings,
+   * Timer, Sessions, Achievements, Share, Friends, Monitoring) that still
+   * reference Tailwind's rounded-xl utility. New components in this pass
+   * use --radius-md/--radius-lg instead — see brief Section 4. */
+  --radius-xl:          12px;
   --radius-full:        9999px;
 
-  /* ── Spacing ────────────────────────────────────────────────────── */
+  /* ── Spacing ────────────────────────────────────────────────────────── */
   --space-1:            4px;
   --space-2:            8px;
   --space-3:            12px;
@@ -96,14 +121,25 @@
   --space-10:           40px;
   --space-12:           48px;
 
-  /* ── Typography ─────────────────────────────────────────────────── */
-  --font-display:       var(--font-display, "Inter", system-ui, sans-serif);
-  --font-body:          var(--font-body, "Inter", system-ui, sans-serif);
-  --font-mono:          var(--font-mono, "JetBrains Mono", monospace);
+  /* ── Typography ─────────────────────────────────────────────────────
+   * One family throughout. Headers differ from body by weight/size only
+   * — no separate "branded" display face.                              */
+  --font-display:       "Inter", system-ui, sans-serif;
+  --font-body:          "Inter", system-ui, sans-serif;
+  --font-mono:          "JetBrains Mono", monospace;
 
-  /* ── Transitions ────────────────────────────────────────────────── */
+  /* Type scale — dashboard/data text stays small (12–13px); larger sizes
+   * are reserved for actual reading content (document/report prose).    */
+  --text-xs:            11px;
+  --text-sm:            12px;
+  --text-base:          13px;
+  --text-md:            14px;
+  --text-lg:            16px;
+  --text-xl:            19px;
+  --text-2xl:           22px;
+
+  /* ── Transitions — fast, purposeful, no spring/bounce ──────────────── */
   --transition-fast:    100ms ease;
-  --transition-base:    180ms ease;
-  --transition-slow:    320ms ease;
-  --transition-spring:  300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-base:    150ms ease;
+  --transition-slow:    220ms ease;
 }

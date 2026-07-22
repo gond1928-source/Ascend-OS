@@ -28,6 +28,7 @@ export interface SessionContextValue {
   sessions: Session[];
   isLoading: boolean;
   addSession: (draft: SessionDraft) => { session: Session; xpEarned: number };
+  updateSession: (id: string, patch: Partial<Pick<Session, "language" | "durationMinutes" | "note">>) => void;
   deleteSession: (id: string) => void;
   clearAll: () => void;
 }
@@ -66,6 +67,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return { session, xpEarned: xpForSession(session) };
   }, []);
 
+  /**
+   * Edits a manual session's language/duration/note in place. Deliberately
+   * does NOT allow editing `kind`, `startedAt`, or `source` — changing kind
+   * would need to re-run session-grouping's combined-bar logic, and this is
+   * scoped to fixing an existing manual entry's details, not re-authoring
+   * it. Also deliberately does not recompute `endedAt` from the new
+   * duration — nothing currently renders endedAt for a manual entry, but
+   * flagging this here so a future feature that does render it isn't
+   * surprised that duration and endedAt can drift apart after an edit.
+   */
+  const updateSession = useCallback((id: string, patch: Partial<Pick<Session, "language" | "durationMinutes" | "note">>) => {
+    setSessions((prev) => {
+      const next = prev.map((s) => (s.id === id ? { ...s, ...patch } : s));
+      void getSessionStore().save(next);
+      return next;
+    });
+  }, []);
+
   const deleteSession = useCallback((id: string) => {
     setSessions((prev) => {
       const next = prev.filter((s) => s.id !== id);
@@ -80,7 +99,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SessionContext.Provider value={{ sessions, isLoading, addSession, deleteSession, clearAll }}>
+    <SessionContext.Provider value={{ sessions, isLoading, addSession, updateSession, deleteSession, clearAll }}>
       {children}
     </SessionContext.Provider>
   );

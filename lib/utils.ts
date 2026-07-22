@@ -49,3 +49,53 @@ export function formatDurationCompact(minutes: number): string {
   }
   return `${formatHoursDecimal(minutes)}h`;
 }
+
+/**
+ * Full date + time + timezone for a native tooltip on a relative
+ * timestamp — e.g. hovering "2h ago" shows the exact moment. Shared by
+ * every relative-time display in the app (Reports, Study Library,
+ * Projects, Activity) via components/ui/timestamp.tsx, rather than each
+ * page reimplementing the same Intl call.
+ */
+export function formatFullTimestamp(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: "full",
+    timeStyle: "short",
+  }) + ` (${Intl.DateTimeFormat().resolvedOptions().timeZone})`;
+}
+
+/**
+ * Compact relative timestamp for "Last updated"/"Last activity" readouts
+ * (Project Overview tab). Plain and factual per the design brief's copy
+ * tone — no "just now!" exclamation, no fuzzy marketing phrasing.
+ */
+export function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  const diffMs = Date.now() - then;
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.round(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  const years = Math.round(months / 12);
+  return `${years}y ago`;
+}
+
+/**
+ * File size for the file-attachment row (design brief §11 — e.g.
+ * "filename.pdf · 152.49 KB"). Bytes in, human string out; caller decides
+ * whether a size is even known (many attachments today are external URLs
+ * with no byte count available, so this is only called when one exists).
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(2)} KB`;
+  const mb = kb / 1024;
+  if (mb < 1024) return `${mb.toFixed(2)} MB`;
+  return `${(mb / 1024).toFixed(2)} GB`;
+}

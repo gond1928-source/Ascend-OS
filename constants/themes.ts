@@ -1,5 +1,5 @@
-export const CHART_GRID_COLOR = "#1b2230";
-export const CHART_AXIS_COLOR = "#717a92";
+export const CHART_GRID_COLOR = "#282828";
+export const CHART_AXIS_COLOR = "#838383";
 /**
  * Semantic status colors — pinned globally, NOT theme-reactive.
  *

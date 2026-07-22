@@ -43,6 +43,16 @@ export interface ClassifiedSnapshot extends WindowSnapshot {
   classificationReason: string;
   /** True only when IDE is focused AND keyboard activity detected */
   isActivelyCoding?: boolean;
+  /**
+   * Site-level label for browser windows (e.g. "Claude", "ChatGPT", "Reddit"),
+   * derived from the tab URL or page title — NOT the OS-reported process
+   * name, which is just "Chrome"/"Google Chrome" for every tab regardless of
+   * which site is open. Only set when the focused window is a browser.
+   * Segmenter uses this (falling back to appName) to compute primaryApp, so
+   * distinct sites don't collapse into one "Chrome" bucket. See classifier.ts
+   * extractBrowserSiteLabel().
+   */
+  siteLabel?: string;
 }
 
 // ── Segments ──────────────────────────────────────────────────────────────────

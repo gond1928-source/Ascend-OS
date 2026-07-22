@@ -24,7 +24,7 @@ export const LANGUAGES: LanguageMeta[] = [
   { name: "HTML", color: "#e2733c" },
   { name: "CSS", color: "#5b8def" },
   { name: "SQL", color: "#5dc9a8" },
-  { name: "Other", color: "#717a92" },
+  { name: "Other", color: "#838383" },
 ];
 
 export function languageColor(name: string): string {

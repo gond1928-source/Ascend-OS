@@ -29,6 +29,9 @@
 import { SessionDraft } from "@/types/session";
 import { draftsToSessions } from "@/lib/session-factory";
 import { loadSessionsSync, saveSessionsSync } from "@/lib/storage/session-store";
+import { DistractionDraft } from "@/types/distraction";
+import { draftsToDistractions } from "@/lib/distraction-factory";
+import { loadDistractionsSync, saveDistractionsSync } from "@/lib/storage/distraction-store";
 
 /**
  * Append session drafts directly to localStorage, synchronously.
@@ -41,6 +44,19 @@ export function persistDraftsDirectly(drafts: SessionDraft[]): void {
     const existing = loadSessionsSync();
     const newSessions = draftsToSessions(drafts, new Date());
     saveSessionsSync([...newSessions, ...existing]);
+  } catch {
+    // Nothing more we can do from inside an unload handler.
+  }
+}
+
+/** Distraction-side equivalent of persistDraftsDirectly, for the same
+ * page-unload safety net. See that function's doc comment above. */
+export function persistDistractionDraftsDirectly(drafts: DistractionDraft[]): void {
+  if (typeof window === "undefined" || drafts.length === 0) return;
+  try {
+    const existing = loadDistractionsSync();
+    const newRecords = draftsToDistractions(drafts, new Date());
+    saveDistractionsSync([...newRecords, ...existing]);
   } catch {
     // Nothing more we can do from inside an unload handler.
   }

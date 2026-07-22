@@ -5,7 +5,7 @@ import { formatMinutes } from "@/lib/utils";
 import { useState } from "react";
 
 const INTENSITY_COLOR: Record<HeatmapCell["intensity"], string> = {
-  0: "#141923",
+  0: "#1c1c1c",
   1: "rgba(61, 220, 151, 0.25)",
   2: "rgba(61, 220, 151, 0.5)",
   3: "rgba(61, 220, 151, 0.75)",
